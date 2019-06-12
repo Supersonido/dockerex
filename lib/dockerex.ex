@@ -1,18 +1,18 @@
 defmodule Dockerex do
-  @moduledoc """
-  Documentation for Dockerex.
-  """
+  @spec get_url(String.t(), map()) :: String.t()
+  def get_url(endpoint \\ "", query \\ nil) do
+    entrypoint = Application.get_env(:dockerex, :url, "http://127.0.0.1:2375/")
+    uri = URI.merge(URI.parse(entrypoint), endpoint)
 
-  @doc """
-  Hello world.
+    uri =
+      case query do
+        nil ->
+          uri
 
-  ## Examples
+        _ ->
+          URI.merge(uri, "?" <> URI.encode_query(query))
+      end
 
-      iex> Dockerex.hello
-      :world
-
-  """
-  def hello do
-    :world
+    URI.to_string(uri)
   end
 end
