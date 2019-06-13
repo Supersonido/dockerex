@@ -14,35 +14,51 @@ defmodule Dockerex.Containers.Types do
     @type t :: %{
             Command: String.t(),
             Created: integer(),
-            HostConfig: %{NetworkMode: "default"} | %{},
+            HostConfig: %{atom() => String.t()},
             Id: String.t(),
             Image: String.t(),
-            ImageID: "sha256:fce289e99eb9bca977dae136fbe2a82b6b7d4c372474c9235adc1741675f587e",
-            Labels: %{},
-            Mounts: [],
+            ImageID: String.t(),
+            Labels: %{atom() => String.t()},
+            Mounts: [
+              %{
+                Name: String.t(),
+                Source: String.t(),
+                Destination: String.t(),
+                Driver: String.t(),
+                Mode: String.t(),
+                RW: boolean(),
+                Propagation: String.t()
+              }
+            ],
             Names: [String.t()],
             NetworkSettings: %{
               Networks: %{
                 bridge: %{
-                  Aliases: nil,
-                  DriverOpts: nil,
-                  EndpointID: "",
-                  Gateway: "",
-                  GlobalIPv6Address: "",
-                  GlobalIPv6PrefixLen: 0,
-                  IPAMConfig: nil,
-                  IPAddress: "",
-                  IPPrefixLen: 0,
-                  IPv6Gateway: "",
-                  Links: nil,
-                  MacAddress: "",
-                  NetworkID: "800b2e1a52cebb65aad6948cb19542f8cf88701ed48664eda8e16695526ac2ee"
+                  Aliases: String.t() | nil,
+                  DriverOpts: String.t() | nil,
+                  EndpointID: String.t(),
+                  Gateway: String.t(),
+                  GlobalIPv6Address: String.t(),
+                  GlobalIPv6PrefixLen: integer(),
+                  IPAMConfig: String.t() | nil,
+                  IPAddress: String.t(),
+                  IPPrefixLen: integer(),
+                  IPv6Gateway: String.t(),
+                  Links: String.t() | nil,
+                  MacAddress: String.t(),
+                  NetworkID: String.t()
                 }
               }
             },
-            Ports: [],
-            State: "exited",
-            Status: "Exited (0) 11 minutes ago"
+            Ports: [
+              %{
+                PrivatePort: integer(),
+                PublicPort: integer(),
+                Type: String.t()
+              }
+            ],
+            State: String.t(),
+            Status: String.t()
           }
   end
 end
