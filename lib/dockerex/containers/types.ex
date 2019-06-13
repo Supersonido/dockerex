@@ -12,58 +12,10 @@ defmodule Dockerex.Containers.Types do
   end
 
   defmodule ListResponse do
-    @type t :: %{
-            Command: String.t(),
-            Created: integer(),
-            HostConfig: %{atom() => String.t()},
-            Id: String.t(),
-            Image: String.t(),
-            ImageID: String.t(),
-            Labels: %{atom() => String.t()},
-            Mounts: [
-              %{
-                Name: String.t(),
-                Source: String.t(),
-                Destination: String.t(),
-                Driver: String.t(),
-                Mode: String.t(),
-                RW: boolean(),
-                Propagation: String.t()
-              }
-            ],
-            Names: [String.t()],
-            NetworkSettings: %{
-              Networks: %{
-                bridge: %{
-                  Aliases: String.t() | nil,
-                  DriverOpts: String.t() | nil,
-                  EndpointID: String.t(),
-                  Gateway: String.t(),
-                  GlobalIPv6Address: String.t(),
-                  GlobalIPv6PrefixLen: integer(),
-                  IPAMConfig: String.t() | nil,
-                  IPAddress: String.t(),
-                  IPPrefixLen: integer(),
-                  IPv6Gateway: String.t(),
-                  Links: String.t() | nil,
-                  MacAddress: String.t(),
-                  NetworkID: String.t()
-                }
-              }
-            },
-            Ports: [
-              %{
-                PrivatePort: integer(),
-                PublicPort: integer(),
-                Type: String.t()
-              }
-            ],
-            State: String.t(),
-            Status: String.t()
-          }
+    @type t :: %{atom() => any()}
   end
 
   defmodule ContainerResponse do
-    @type t :: %{}
+    @type t :: %{atom() => any()}
   end
 end
