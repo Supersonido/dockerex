@@ -3,6 +3,7 @@ defmodule Dockerex.Containers.Types do
     quote do
       alias Dockerex.Containers.Types.ListParams
       alias Dockerex.Containers.Types.ListResponse
+      alias Dockerex.Containers.Types.ContainerResponse
     end
   end
 
@@ -60,5 +61,9 @@ defmodule Dockerex.Containers.Types do
             State: String.t(),
             Status: String.t()
           }
+  end
+
+  defmodule ContainerResponse do
+    @type t :: %{}
   end
 end
