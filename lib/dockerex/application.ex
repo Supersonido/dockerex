@@ -20,5 +20,3 @@ defmodule Dockerex.Application do
     end
   end
 end
-
-xs
