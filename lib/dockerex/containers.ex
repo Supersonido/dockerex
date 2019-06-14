@@ -29,25 +29,11 @@ defmodule Dockerex.Containers do
     end
   end
 
-  @spec logs(String.t(), pid() | nil, map()) :: String.t()
-  def logs(id, pid, params \\ %{}) do
-    params = Map.put(params, :follow, pid != nil)
+  @spec logs(String.t(), pid() | nil, map()) :: String.t() | {:error, :not_found | :request_error}
+  def logs(id, nil, params) do
     url = Dockerex.get_url("/containers/#{id}/logs", params)
 
-    options =
-      if pid != nil do
-        [stream_to: pid]
-      else
-        []
-      end
-
-    case HTTPoison.get(url, %{}, options) do
-      {:ok, %HTTPoison.AsyncResponse{id: reference}} ->
-        {:ok, reference}
-
-      {:ok, %HTTPoison.Response{body: body, status_code: 101}} ->
-        body
-
+    case HTTPoison.get(url, %{}, []) do
       {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
         body
 
@@ -55,6 +41,22 @@ defmodule Dockerex.Containers do
         {:error, :not_found}
 
       resp ->
+        Logger.error(resp)
+        {:error, :request_error}
+    end
+  end
+
+  def logs(id, pid, params) do
+    url = Dockerex.get_url("/containers/#{id}/logs", Map.put(params, :follow, true))
+    {:ok, gen} = Dockerex.Containers.Logs.Supervisor.start_child(pid)
+    options = [stream_to: gen, timeout: :infinity, recv_timeout: :infinity]
+
+    case HTTPoison.get(url, %{}, options) do
+      {:ok, %HTTPoison.AsyncResponse{id: reference}} ->
+        {:ok, reference}
+
+      resp ->
+        GenServer.stop(gen)
         Logger.error(resp)
         {:error, :request_error}
     end
