@@ -18,7 +18,7 @@ defmodule Dockerex.Containers do
     end
   end
 
-  @spec inspect(String.t()) :: ContainerResponse.t() | {:error, :request_error | :not_found}
+  @spec inspect(String.t()) :: Container.t() | {:error, :request_error | :not_found}
   def inspect(id) do
     case HTTPoison.get(Dockerex.get_url("/containers/#{id}/json")) do
       {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->

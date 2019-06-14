@@ -2,8 +2,8 @@ defmodule Dockerex.Containers.Types do
   defmacro __using__(_) do
     quote do
       alias Dockerex.Containers.Types.ListParams
-      alias Dockerex.Containers.Types.ListResponse
-      alias Dockerex.Containers.Types.ContainerResponse
+      alias Dockerex.Containers.Types.ContainerAbstract
+      alias Dockerex.Containers.Types.Container
     end
   end
 
