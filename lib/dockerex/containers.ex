@@ -2,11 +2,15 @@ defmodule Dockerex.Containers do
   use Dockerex.Containers.Types
   require Logger
 
-  @spec list(ListParams.t()) :: [ListResponse.t()] | {:error, :request_error}
+  @spec list(ListParams.t()) ::
+          {:ok, [ContainerAbstract.t()]} | {:error, :request_error | :bad_request}
   def list(options \\ nil) do
     case HTTPoison.get(Dockerex.get_url("/containers/json", options)) do
       {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
-        Poison.decode!(body, keys: :atoms)
+        {:ok, Poison.decode!(body, keys: :atoms)}
+
+      {:ok, %HTTPoison.Response{status_code: 400}} ->
+        {:error, :bad_request}
 
       resp ->
         Logger.error(resp)
@@ -18,7 +22,24 @@ defmodule Dockerex.Containers do
   def inspect(id) do
     case HTTPoison.get(Dockerex.get_url("/containers/#{id}/json")) do
       {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
-        Poison.decode!(body, keys: :atoms)
+        {:ok, Poison.decode!(body, keys: :atoms)}
+
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        {:error, :not_found}
+
+      resp ->
+        Logger.error(resp)
+        {:error, :request_error}
+    end
+  end
+
+  @spec create(String.t(), map()) :: {:ok, map()} | {:error, :request_error | :not_found}
+  def create(name, params) do
+    url = Dockerex.get_url("/containers/create", %{name: name})
+
+    case HTTPoison.post(url, params, %{}, []) do
+      {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
+        {:ok, Poison.decode!(body, keys: :atoms)}
 
       {:ok, %HTTPoison.Response{status_code: 404}} ->
         {:error, :not_found}

@@ -18,4 +18,8 @@ defmodule Dockerex do
 
     URI.to_string(uri)
   end
+
+  defmodule Key do
+    @type t :: atom() | String.t()
+  end
 end
