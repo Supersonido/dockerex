@@ -79,6 +79,8 @@ defmodule Dockerex.Containers.Types do
 
   defmodule HostConfig do
     @type t :: %{
+            Binds: [String.t()],
+            Links: [String.t()],
             MaximumIOps: integer(),
             MaximumIOBps: integer(),
             BlkioWeight: integer(),
@@ -105,7 +107,7 @@ defmodule Dockerex.Containers.Types do
             OomScoreAdj: integer(),
             NetworkMode: String.t(),
             PidMode: String.t(),
-            PortBindings: %{},
+            PortBindings: PortBindings.t(),
             Privileged: boolean(),
             ReadonlyRootfs: boolean(),
             PublishAllPorts: boolean(),
@@ -114,12 +116,45 @@ defmodule Dockerex.Containers.Types do
               Name: String.t()
             },
             LogConfig: %{
-              Type: String.t()
+              Type: String.t(),
+              Config: map()
             },
             Sysctls: Sysctls.t(),
             Ulimits: [Ulimits.t()],
             VolumeDriver: String.t(),
+            ShmSize: integer(),
+            NanoCPUs: integer(),
+            CpuQuota: integer(),
+            CpusetCpus: String.t(),
+            CpusetMems: String.t(),
+            MaximumIOps: integer(),
+            MaximumIOBps: integer(),
+            MemorySwappiness: integer(),
+            PidsLimit: integer(),
+            Dns: [String.t()],
+            DnsOptions: [String.t()],
+            DnsSearch: [String.t()],
+            VolumesFrom: [String.t()],
+            CapAdd: [String.t()],
+            CapDrop: [String.t()],
+            GroupAdd: [String.t()],
+            AutoRemove: boolean(),
+            NetworkMode: String.t(),
+            Devices: [Device.t()],
+            SecurityOpt: [String.t()],
+            StorageOpt: %{size: String.t()},
+            CgroupParent: String.t(),
             ShmSize: integer()
+          }
+  end
+
+  defmodule PortBindings do
+    @type t :: %{
+            String.t() => [
+              %{
+                HostPort: String.t()
+              }
+            ]
           }
   end
 
@@ -197,6 +232,22 @@ defmodule Dockerex.Containers.Types do
           }
   end
 
+  defmodule NetworkingConfig do
+    @type t :: %{
+            EndpointsConfig: %{
+              isolated_nw: %{
+                IPAMConfig: %{
+                  IPv4Address: String.t(),
+                  IPv6Address: String.t(),
+                  LinkLocalIPs: [String.t()]
+                },
+                Links: [String.t()],
+                Aliases: [String.t()]
+              }
+            }
+          }
+  end
+
   defmodule Container do
     @type t :: %{
             AppArmorProfile: String.t(),
@@ -222,7 +273,57 @@ defmodule Dockerex.Containers.Types do
           }
   end
 
+  defmodule CreateContainer do
+    @type t :: %{
+            Hostname: String.t(),
+            Domainname: String.t(),
+            User: String.t(),
+            AttachStdin: boolean(),
+            AttachStdout: boolean(),
+            AttachStderr: boolean(),
+            Tty: boolean(),
+            OpenStdin: boolean(),
+            StdinOnce: boolean(),
+            Env: [String.t()],
+            Cmd: [String.t()],
+            Entrypoint: String.t(),
+            Image: String.t(),
+            Labels: Labels.t(),
+            Volumes: Volumes.t(),
+            WorkingDir: String.t(),
+            NetworkDisabled: boolean(),
+            MacAddress: String.t(),
+            ExposedPorts: %{String.t() => map()},
+            StopSignal: String.t(),
+            StopTimeout: integer(),
+            HostConfig: HostConfig.t(),
+            NetworkingConfig: NetworkingConfig.t()
+          }
+  end
+
   defmodule ListParams do
-    @type t :: %{all: boolean(), limit: integer(), size: integer(), filters: %{}} | nil
+    @type t ::
+            %{all: boolean(), limit: integer(), size: integer(), filters: ListParamsFilter.t()}
+            | nil
+  end
+
+  defmodule ListParamsFilter do
+    @type t :: %{
+            ancestor: String.t(),
+            before: String.t(),
+            expose: String.t(),
+            exited: integer(),
+            health: :starting | :healthy | :unhealthy | :none,
+            id: String.t(),
+            isolation: :default | :process | :hyperv,
+            "is-task": boolean(),
+            label: String.t(),
+            name: String.t(),
+            network: String.t(),
+            publish: String.t(),
+            since: String.t(),
+            status: :created | :restarting | :running | :removing | :paused | :exited | :dead,
+            volume: String.t()
+          }
   end
 end

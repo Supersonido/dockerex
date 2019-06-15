@@ -33,7 +33,8 @@ defmodule Dockerex.Containers do
     end
   end
 
-  @spec create(String.t(), map()) :: {:ok, map()} | {:error, :request_error | :not_found}
+  @spec create(String.t(), CreateContainer.t()) ::
+          {:ok, map()} | {:error, :request_error | :not_found}
   def create(name, params) do
     url = Dockerex.get_url("/containers/create", %{name: name})
 
