@@ -4,8 +4,13 @@ defmodule Dockerex.Containers.Types do
       alias Dockerex.Containers.Types.ListParams
       alias Dockerex.Containers.Types.ContainerAbstract
       alias Dockerex.Containers.Types.Container
+      alias Dockerex.Containers.Types.CreateContainer
     end
   end
+
+  # ===================================================== #
+  # Basic types (Required for Dockerex.Containers types)  #
+  # ===================================================== #
 
   defmodule Mount do
     @type t :: %{
@@ -21,17 +26,23 @@ defmodule Dockerex.Containers.Types do
 
   defmodule Network do
     @type t :: %{
-            Aliases: String.t() | nil,
-            DriverOpts: String.t() | nil,
+            Aliases: [String.t()] | nil,
+            DriverOpts: %{Dockerex.Key.t() => String.t()} | nil,
             EndpointID: String.t(),
             Gateway: String.t(),
             GlobalIPv6Address: String.t(),
             GlobalIPv6PrefixLen: integer(),
-            IPAMConfig: String.t() | nil,
+            IPAMConfig:
+              nil
+              | %{
+                  IPv4Address: String.t(),
+                  IPv6Address: String.t(),
+                  LinkLocalIPs: [String.t()]
+                },
             IPAddress: String.t(),
             IPPrefixLen: integer(),
             IPv6Gateway: String.t(),
-            Links: String.t() | nil,
+            Links: [String.t()] | nil,
             MacAddress: String.t(),
             NetworkID: String.t()
           }
@@ -47,6 +58,10 @@ defmodule Dockerex.Containers.Types do
 
   defmodule Labels do
     @type t :: %{Dockerex.Key.t() => term()}
+  end
+
+  defmodule Volumes do
+    @type t :: %{String.t() => map()}
   end
 
   defmodule Config do
@@ -73,8 +88,86 @@ defmodule Dockerex.Containers.Types do
           }
   end
 
-  defmodule Volumes do
-    @type t :: %{String.t() => map()}
+  defmodule PortBindings do
+    @type t :: %{
+            String.t() => [
+              %{
+                HostPort: String.t()
+              }
+            ]
+          }
+  end
+
+  defmodule BlkioWeight do
+    @type t :: %{Path: String.t(), Weight: integer()}
+  end
+
+  defmodule Device do
+    @type t :: %{
+            PathOnHost: String.t(),
+            PathInContainer: String.t(),
+            CgroupPermissions: String.t()
+          }
+  end
+
+  defmodule Ulimits do
+    @type t :: %{Name: String.t(), Soft: integer(), Hard: integer()}
+  end
+
+  defmodule Sysctls do
+    @type t :: %{Dockerex.Key.t() => String.t()}
+  end
+
+  defmodule NetworkSettings do
+    @type t :: %{
+            Bridge: String.t(),
+            SandboxID: String.t(),
+            HairpinMode: boolean(),
+            LinkLocalIPv6Address: String.t(),
+            LinkLocalIPv6PrefixLen: integer(),
+            SandboxKey: String.t(),
+            EndpointID: String.t(),
+            Gateway: String.t(),
+            GlobalIPv6Address: String.t(),
+            GlobalIPv6PrefixLen: integer(),
+            IPAddress: String.t(),
+            IPPrefixLen: integer(),
+            IPv6Gateway: String.t(),
+            MacAddress: String.t(),
+            Networks: %{atom() => Network.t()}
+          }
+  end
+
+  defmodule State do
+    @type t :: %{
+            Error: String.t(),
+            ExitCode: integer(),
+            FinishedAt: String.t(),
+            OOMKilled: boolean(),
+            Dead: boolean(),
+            Paused: boolean(),
+            Pid: integer(),
+            Restarting: boolean(),
+            Running: boolean(),
+            StartedAt: String.t(),
+            Status: String.t()
+          }
+  end
+
+  defmodule NetworkingConfig do
+    @type t :: %{
+            EndpointsConfig: %{
+              isolated_nw: %{
+                IPAMConfig: %{
+                  IPv4Address: String.t(),
+                  IPv6Address: String.t(),
+                  LinkLocalIPs: [String.t()]
+                },
+                Links: [String.t()],
+                Aliases: [String.t()]
+              }
+            }
+          }
   end
 
   defmodule HostConfig do
@@ -148,27 +241,9 @@ defmodule Dockerex.Containers.Types do
           }
   end
 
-  defmodule PortBindings do
-    @type t :: %{
-            String.t() => [
-              %{
-                HostPort: String.t()
-              }
-            ]
-          }
-  end
-
-  defmodule BlkioWeight do
-    @type t :: %{Path: String.t(), Weight: integer()}
-  end
-
-  defmodule Device do
-    @type t :: %{
-            PathOnHost: String.t(),
-            PathInContainer: String.t(),
-            CgroupPermissions: String.t()
-          }
-  end
+  # ============================== #
+  # Types for Dockerex.Containers  #
+  # ============================== #
 
   defmodule ContainerAbstract do
     @type t :: %{
@@ -185,66 +260,6 @@ defmodule Dockerex.Containers.Types do
             Ports: [Port.t()],
             State: String.t(),
             Status: String.t()
-          }
-  end
-
-  defmodule Ulimits do
-    @type t :: %{Name: String.t(), Soft: integer(), Hard: integer()}
-  end
-
-  defmodule Sysctls do
-    @type t :: %{Dockerex.Key.t() => String.t()}
-  end
-
-  defmodule NetworkSettings do
-    @type t :: %{
-            Bridge: String.t(),
-            SandboxID: String.t(),
-            HairpinMode: boolean(),
-            LinkLocalIPv6Address: String.t(),
-            LinkLocalIPv6PrefixLen: integer(),
-            SandboxKey: String.t(),
-            EndpointID: String.t(),
-            Gateway: String.t(),
-            GlobalIPv6Address: String.t(),
-            GlobalIPv6PrefixLen: integer(),
-            IPAddress: String.t(),
-            IPPrefixLen: integer(),
-            IPv6Gateway: String.t(),
-            MacAddress: String.t(),
-            Networks: %{atom() => Network.t()}
-          }
-  end
-
-  defmodule State do
-    @type t :: %{
-            Error: String.t(),
-            ExitCode: integer(),
-            FinishedAt: String.t(),
-            OOMKilled: boolean(),
-            Dead: boolean(),
-            Paused: boolean(),
-            Pid: integer(),
-            Restarting: boolean(),
-            Running: boolean(),
-            StartedAt: String.t(),
-            Status: String.t()
-          }
-  end
-
-  defmodule NetworkingConfig do
-    @type t :: %{
-            EndpointsConfig: %{
-              isolated_nw: %{
-                IPAMConfig: %{
-                  IPv4Address: String.t(),
-                  IPv6Address: String.t(),
-                  LinkLocalIPs: [String.t()]
-                },
-                Links: [String.t()],
-                Aliases: [String.t()]
-              }
-            }
           }
   end
 
@@ -301,29 +316,29 @@ defmodule Dockerex.Containers.Types do
           }
   end
 
+  defmodule ListParamsFilter do
+    @type t :: %{
+            ancestor: [String.t()],
+            before: [String.t()],
+            expose: [String.t()],
+            exited: [integer()],
+            health: [:starting | :healthy | :unhealthy | :none],
+            id: [String.t()],
+            isolation: [:default | :process | :hyperv],
+            "is-task": [boolean()],
+            label: [String.t()],
+            name: [String.t()],
+            network: [String.t()],
+            publish: [String.t()],
+            since: [String.t()],
+            status: [:created | :restarting | :running | :removing | :paused | :exited | :dead],
+            volume: [String.t()]
+          }
+  end
+
   defmodule ListParams do
     @type t ::
             %{all: boolean(), limit: integer(), size: integer(), filters: ListParamsFilter.t()}
             | nil
-  end
-
-  defmodule ListParamsFilter do
-    @type t :: %{
-            ancestor: String.t(),
-            before: String.t(),
-            expose: String.t(),
-            exited: integer(),
-            health: :starting | :healthy | :unhealthy | :none,
-            id: String.t(),
-            isolation: :default | :process | :hyperv,
-            "is-task": boolean(),
-            label: String.t(),
-            name: String.t(),
-            network: String.t(),
-            publish: String.t(),
-            since: String.t(),
-            status: :created | :restarting | :running | :removing | :paused | :exited | :dead,
-            volume: String.t()
-          }
   end
 end

@@ -5,6 +5,16 @@ defmodule Dockerex.Containers do
   @spec list(ListParams.t()) ::
           {:ok, [ContainerAbstract.t()]} | {:error, :request_error | :bad_request}
   def list(options \\ nil) do
+    options =
+      case options do
+        nil ->
+          options
+
+        _ ->
+          filter = Map.get(options, :filters)
+          Map.put(options, :filters, Poison.encode!(filter))
+      end
+
     case HTTPoison.get(Dockerex.get_url("/containers/json", options)) do
       {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
         {:ok, Poison.decode!(body, keys: :atoms)}
