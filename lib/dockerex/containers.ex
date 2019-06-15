@@ -23,7 +23,7 @@ defmodule Dockerex.Containers do
         {:error, :bad_request}
 
       resp ->
-        Logger.error(resp)
+        Logger.error("#{inspect(resp)}")
         {:error, :request_error}
     end
   end
@@ -38,7 +38,7 @@ defmodule Dockerex.Containers do
         {:error, :not_found}
 
       resp ->
-        Logger.error(resp)
+        Logger.error("#{inspect(resp)}")
         {:error, :request_error}
     end
   end
@@ -56,7 +56,7 @@ defmodule Dockerex.Containers do
         {:error, :not_found}
 
       resp ->
-        Logger.error(resp)
+        Logger.error("#{inspect(resp)}")
         {:error, :request_error}
     end
   end
@@ -73,7 +73,7 @@ defmodule Dockerex.Containers do
         {:error, :not_found}
 
       resp ->
-        Logger.error(resp)
+        Logger.error("#{inspect(resp)}")
         {:error, :request_error}
     end
   end
@@ -89,7 +89,7 @@ defmodule Dockerex.Containers do
 
       resp ->
         GenServer.stop(gen)
-        Logger.error(resp)
+        Logger.error("#{inspect(resp)}")
         {:error, :request_error}
     end
   end
