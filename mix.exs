@@ -26,7 +26,8 @@ defmodule Dockerex.MixProject do
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"},
       {:params, "~> 2.1"},
       {:httpoison, "~> 1.5"},
-      {:poison, "~> 4.0"}
+      {:poison, "~> 4.0"},
+      {:dialyxir, "~> 1.0.0-rc.6", only: [:dev], runtime: false}
     ]
   end
 end
