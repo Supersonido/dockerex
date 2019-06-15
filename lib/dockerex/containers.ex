@@ -1,6 +1,6 @@
 defmodule Dockerex.Containers do
   require Logger
-  # use Dockerex.Containers.Types
+  use Dockerex.Containers.Types
 
   @spec list(ListParams.t()) ::
           {:ok, [ContainerAbstract.t()]} | {:error, :request_error | :bad_request}
@@ -28,7 +28,7 @@ defmodule Dockerex.Containers do
     end
   end
 
-  @spec get(String.t()) :: Container.t() | {:error, :request_error | :not_found}
+  @spec get(String.t()) :: {:ok, Container.t()} | {:error, :request_error | :not_found}
   def get(id) do
     case HTTPoison.get(Dockerex.get_url("/containers/#{id}/json")) do
       {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
