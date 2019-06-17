@@ -361,4 +361,19 @@ defmodule Dockerex.Containers.Types do
   defmodule RemoveParams do
     @type t :: %{v: boolean(), force: boolean(), link: boolean()}
   end
+
+  defmodule PruneParamsFilter do
+    @type t :: %{until: [integer()], label: [String.t()]}
+  end
+
+  defmodule PruneParams do
+    @type t :: %{filters: PruneParamsFilter.t()}
+  end
+
+  defmodule PruneResponse do
+    @type t :: %{
+            ContainersDeleted: [String.t()] | nil,
+            SpaceReclaimed: integer()
+          }
+  end
 end

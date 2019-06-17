@@ -186,4 +186,35 @@ defmodule Dockerex.Containers do
         {:error, :request_error}
     end
   end
+
+  @spec prune(map() | nil) :: {:ok, map()} | {:error, :request_error}
+  def prune(params \\ nil) do
+    params =
+      case params do
+        nil ->
+          params
+
+        _ ->
+          filter = Map.get(params, :filters)
+          Map.put(params, :filters, Poison.encode!(filter))
+      end
+
+    url = Dockerex.get_url("/containers/prune", params)
+    options = [timeout: :infinity, recv_timeout: :infinity]
+
+    case HTTPoison.post(url, "", %{}, options) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        {:ok, Poison.decode!(body, keys: :atoms)}
+
+      {:ok, %HTTPoison.Response{status_code: 409}} ->
+        {:error, :already_stopped}
+
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        {:error, :not_found}
+
+      resp ->
+        Logger.error("#{inspect(resp)}")
+        {:error, :request_error}
+    end
+  end
 end
