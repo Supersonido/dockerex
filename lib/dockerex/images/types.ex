@@ -5,6 +5,8 @@ defmodule Dockerex.Images.Types do
       alias Dockerex.Images.Types.ImageAbstract
       alias Dockerex.Images.Types.Image
       alias Dockerex.Images.Types.CreateParams
+      alias Dockerex.Containers.Types.PruneParams
+      alias Dockerex.Containers.Types.PruneResponse
     end
   end
 
@@ -131,6 +133,28 @@ defmodule Dockerex.Images.Types do
             repo: String.t(),
             tag: String.t(),
             platform: String.t()
+          }
+  end
+
+  defmodule PruneParamsFilter do
+    @type t :: %{until: [integer()], label: [String.t()], dangling: [boolean()]}
+  end
+
+  defmodule PruneParams do
+    @type t :: %{filters: PruneParamsFilter.t()}
+  end
+
+  defmodule PruneResponse do
+    @type t :: %{
+            ContainersDeleted:
+              [
+                %{
+                  Untagged: String.t(),
+                  Deleted: String.t()
+                }
+              ]
+              | nil,
+            SpaceReclaimed: integer()
           }
   end
 end
