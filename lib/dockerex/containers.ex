@@ -65,7 +65,8 @@ defmodule Dockerex.Containers do
     end
   end
 
-  @spec logs(String.t(), pid() | nil, map()) :: String.t() | {:error, :not_found | :request_error}
+  @spec logs(String.t(), pid() | nil, map()) ::
+          {:ok, binary()} | {:error, :not_found | :request_error}
   def logs(id, nil, params) do
     url = Dockerex.get_url("/containers/#{id}/logs", params)
 
@@ -102,8 +103,9 @@ defmodule Dockerex.Containers do
           {:ok, String.t()} | {:error, :already_started | :not_found | :request_error}
   def start(id, params \\ nil) do
     url = Dockerex.get_url("/containers/#{id}/start", params)
+    options = [timeout: :infinity, recv_timeout: :infinity]
 
-    case HTTPoison.post(url, "", %{}, []) do
+    case HTTPoison.post(url, "", %{}, options) do
       {:ok, %HTTPoison.Response{status_code: 204}} ->
         {:ok, id}
 
@@ -130,6 +132,28 @@ defmodule Dockerex.Containers do
         {:ok, id}
 
       {:ok, %HTTPoison.Response{status_code: 304}} ->
+        {:error, :already_stopped}
+
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        {:error, :not_found}
+
+      resp ->
+        Logger.error("#{inspect(resp)}")
+        {:error, :request_error}
+    end
+  end
+
+  @spec kill(String.t(), String.t() | nil) ::
+          :ok | {:error, :not_running | :not_found | :request_error}
+  def kill(id, signal \\ nil) do
+    url = Dockerex.get_url("/containers/#{id}/kill", %{signal: signal})
+    options = [timeout: :infinity, recv_timeout: :infinity]
+
+    case HTTPoison.post(url, "", %{}, options) do
+      {:ok, %HTTPoison.Response{status_code: 204}} ->
+        {:ok, id}
+
+      {:ok, %HTTPoison.Response{status_code: 409}} ->
         {:error, :already_stopped}
 
       {:ok, %HTTPoison.Response{status_code: 404}} ->
