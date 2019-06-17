@@ -187,7 +187,7 @@ defmodule Dockerex.Containers do
     end
   end
 
-  @spec prune(map() | nil) :: {:ok, map()} | {:error, :request_error}
+  @spec prune(PruneParams.t() | nil) :: {:ok, PruneResponse.t()} | {:error, :request_error}
   def prune(params \\ nil) do
     params =
       case params do

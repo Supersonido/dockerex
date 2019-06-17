@@ -9,6 +9,8 @@ defmodule Dockerex.Containers.Types do
       alias Dockerex.Containers.Types.StopParams
       alias Dockerex.Containers.Types.CreateContainerResponse
       alias Dockerex.Containers.Types.RemoveParams
+      alias Dockerex.Containers.Types.PruneParams
+      alias Dockerex.Containers.Types.PruneResponse
     end
   end
 
