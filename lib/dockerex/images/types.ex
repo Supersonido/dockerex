@@ -4,6 +4,7 @@ defmodule Dockerex.Images.Types do
       alias Dockerex.Images.Types.ListParams
       alias Dockerex.Images.Types.ImageAbstract
       alias Dockerex.Images.Types.Image
+      alias Dockerex.Images.Types.CreateParams
     end
   end
 
@@ -121,5 +122,15 @@ defmodule Dockerex.Images.Types do
 
   defmodule ListParams do
     @type t :: %{all: boolean(), filters: ListParamsFilters.t(), digests: boolean()} | nil
+  end
+
+  defmodule CreateParams do
+    @type t :: %{
+            fromImage: String.t(),
+            fromSrc: String.t(),
+            repo: String.t(),
+            tag: String.t(),
+            platform: String.t()
+          }
   end
 end

@@ -19,6 +19,29 @@ defmodule Dockerex do
     URI.to_string(uri)
   end
 
+  @spec headers(map()) :: map()
+  def headers(headers \\ %{}) do
+    %{"Content-Type" => "application/json"} |> Map.merge(headers)
+  end
+
+  @spec add_auth(map()) :: map()
+  def add_auth(headers \\ %{}) do
+    case Application.get_env(:dockerex, :identitytoken) do
+      nil ->
+        headers
+
+      token ->
+        token64 = Poison.encode!(token) |> Base.encode64()
+        Map.put(headers, "X-Registry-Auth", token64)
+    end
+  end
+
+  @spec add_registry_config(map(), map()) :: map()
+  def add_registry_config(registry_config, headers \\ %{}) do
+    registry64 = Poison.encode!(registry_config) |> Base.encode64()
+    Map.put(headers, "X-Registry-Config", registry64)
+  end
+
   defmodule Key do
     @type t :: atom() | String.t()
   end

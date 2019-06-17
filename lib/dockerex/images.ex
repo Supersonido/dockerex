@@ -3,7 +3,7 @@ defmodule Dockerex.Images do
   require Logger
 
   @spec list(ListParams.t()) ::
-          {:ok, [ImageAbstract.t()]} | {:error, :request_error | :bad_request}
+          {:ok, [ImageAbstract.t()]} | {:error, :bad_request, map()} | {:error, :request_error}
   def list(options \\ nil) do
     options =
       case options do
@@ -19,8 +19,8 @@ defmodule Dockerex.Images do
       {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
         {:ok, Poison.decode!(body, keys: :atoms)}
 
-      {:ok, %HTTPoison.Response{status_code: 400}} ->
-        {:error, :bad_request}
+      {:ok, %HTTPoison.Response{status_code: 400, body: body}} ->
+        {:error, :bad_request, Poison.decode!(body)}
 
       resp ->
         Logger.error(resp)
@@ -28,7 +28,7 @@ defmodule Dockerex.Images do
     end
   end
 
-  @spec get(String.t()) :: {:ok, Image.t()} | {:error, :request_error | :not_found}
+  @spec get(String.t()) :: {:ok, Image.t()} | {:error, :not_found | :request_error}
   def get(id) do
     case HTTPoison.get(Dockerex.get_url("/images/#{id}/json")) do
       {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
@@ -36,6 +36,58 @@ defmodule Dockerex.Images do
 
       {:ok, %HTTPoison.Response{status_code: 404}} ->
         {:error, :not_found}
+
+      resp ->
+        Logger.error("#{inspect(resp)}")
+        {:error, :request_error}
+    end
+  end
+
+  @spec create(CreateParams.t(), binary() | nil) ::
+          {:ok, String.t()} | {:error, :bad_request, map()} | {:error, :request_error}
+  def create(params, image \\ nil) do
+    url = Dockerex.get_url("/images/create", params)
+    headers = Dockerex.add_auth()
+
+    case HTTPoison.post(url, image, headers, []) do
+      {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
+        {:ok, body}
+
+      {:ok, %HTTPoison.Response{status_code: 400, body: body}} ->
+        {:error, :bad_request, Poison.decode!(body)}
+
+      resp ->
+        Logger.error("#{inspect(resp)}")
+        {:error, :request_error}
+    end
+  end
+
+  @spec build(CreateParams.t(), binary() | nil, map()) ::
+          {:ok, String.t() | nil} | {:error, :bad_request, map()} | {:error, :request_error}
+  def build(params, image \\ nil, registry_config \\ %{}) do
+    url = Dockerex.get_url("/build", params)
+    headers = Dockerex.add_registry_config(registry_config)
+
+    case HTTPoison.post(url, image || "", headers, []) do
+      {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
+        IO.inspect(body)
+
+        info =
+          String.split(body, "\r\n", trim: true)
+          |> List.delete_at(-1)
+          |> List.last()
+          |> Poison.decode!()
+
+        case info do
+          %{"aux" => %{"ID" => id}} ->
+            {:ok, id}
+
+          _ ->
+            {:ok, nil}
+        end
+
+      {:ok, %HTTPoison.Response{status_code: 400, body: body}} ->
+        {:error, :bad_request, Poison.decode!(body)}
 
       resp ->
         Logger.error("#{inspect(resp)}")
