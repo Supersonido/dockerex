@@ -164,4 +164,26 @@ defmodule Dockerex.Containers do
         {:error, :request_error}
     end
   end
+
+  @spec remove(String.t(), RemoveParams.t() | nil) ::
+          :ok | {:error, :running | :not_found | :request_error}
+  def remove(id, params \\ nil) do
+    url = Dockerex.get_url("/containers/#{id}", params)
+    options = [timeout: :infinity, recv_timeout: :infinity]
+
+    case HTTPoison.delete(url, %{}, options) do
+      {:ok, %HTTPoison.Response{status_code: 204}} ->
+        :ok
+
+      {:ok, %HTTPoison.Response{status_code: 409}} ->
+        {:error, :running}
+
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        {:error, :not_found}
+
+      resp ->
+        Logger.error("#{inspect(resp)}")
+        {:error, :request_error}
+    end
+  end
 end

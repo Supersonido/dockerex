@@ -8,6 +8,7 @@ defmodule Dockerex.Containers.Types do
       alias Dockerex.Containers.Types.StartParams
       alias Dockerex.Containers.Types.StopParams
       alias Dockerex.Containers.Types.CreateContainerResponse
+      alias Dockerex.Containers.Types.RemoveParams
     end
   end
 
@@ -355,5 +356,9 @@ defmodule Dockerex.Containers.Types do
 
   defmodule StopParams do
     @type t :: %{t: integer()}
+  end
+
+  defmodule RemoveParams do
+    @type t :: %{v: boolean(), force: boolean(), link: boolean()}
   end
 end
