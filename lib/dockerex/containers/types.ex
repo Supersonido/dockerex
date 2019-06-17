@@ -5,6 +5,9 @@ defmodule Dockerex.Containers.Types do
       alias Dockerex.Containers.Types.ContainerAbstract
       alias Dockerex.Containers.Types.Container
       alias Dockerex.Containers.Types.CreateContainer
+      alias Dockerex.Containers.Types.StartParams
+      alias Dockerex.Containers.Types.StopParams
+      alias Dockerex.Containers.Types.CreateContainerResponse
     end
   end
 
@@ -316,6 +319,10 @@ defmodule Dockerex.Containers.Types do
           }
   end
 
+  defmodule CreateContainerResponse do
+    @type t :: %{Id: String.t(), Warnings: nil | [String.t()]}
+  end
+
   defmodule ListParamsFilter do
     @type t :: %{
             ancestor: [String.t()],
@@ -340,5 +347,13 @@ defmodule Dockerex.Containers.Types do
     @type t ::
             %{all: boolean(), limit: integer(), size: integer(), filters: ListParamsFilter.t()}
             | nil
+  end
+
+  defmodule StartParams do
+    @type t :: %{detachKeys: String.t()}
+  end
+
+  defmodule StopParams do
+    @type t :: %{t: integer()}
   end
 end

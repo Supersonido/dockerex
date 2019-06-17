@@ -2,7 +2,7 @@ defmodule Dockerex.Containers do
   require Logger
   use Dockerex.Containers.Types
 
-  @spec list(ListParams.t()) ::
+  @spec list(ListParams.t() | nil) ::
           {:ok, [ContainerAbstract.t()]} | {:error, :request_error | :bad_request}
   def list(options \\ nil) do
     options =
@@ -19,8 +19,8 @@ defmodule Dockerex.Containers do
       {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
         {:ok, Poison.decode!(body, keys: :atoms)}
 
-      {:ok, %HTTPoison.Response{status_code: 400}} ->
-        {:error, :bad_request}
+      {:ok, %HTTPoison.Response{status_code: 400, body: body}} ->
+        {:error, :bad_request, Poison.decode!(body)}
 
       resp ->
         Logger.error("#{inspect(resp)}")
@@ -43,17 +43,21 @@ defmodule Dockerex.Containers do
     end
   end
 
-  @spec create(String.t(), CreateContainer.t()) ::
-          {:ok, map()} | {:error, :request_error | :not_found}
+  @spec create(String.t() | nil, CreateContainer.t()) ::
+          {:ok, CreateContainerResponse.t()} | {:error, :request_error | :not_found}
   def create(name, params) do
     url = Dockerex.get_url("/containers/create", %{name: name})
+    headers = Dockerex.headers()
 
-    case HTTPoison.post(url, params, %{}, []) do
-      {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
+    case HTTPoison.post(url, Poison.encode!(params), headers, []) do
+      {:ok, %HTTPoison.Response{body: body, status_code: 201}} ->
         {:ok, Poison.decode!(body, keys: :atoms)}
 
-      {:ok, %HTTPoison.Response{status_code: 404}} ->
-        {:error, :not_found}
+      {:ok, %HTTPoison.Response{status_code: 400, body: body}} ->
+        {:error, :bad_request, Poison.decode!(body)}
+
+      {:ok, %HTTPoison.Response{status_code: 409}} ->
+        {:error, :conflict}
 
       resp ->
         Logger.error("#{inspect(resp)}")
@@ -67,7 +71,7 @@ defmodule Dockerex.Containers do
 
     case HTTPoison.get(url, %{}, []) do
       {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
-        body
+        {:ok, body}
 
       {:ok, %HTTPoison.Response{status_code: 404}} ->
         {:error, :not_found}
@@ -89,6 +93,49 @@ defmodule Dockerex.Containers do
 
       resp ->
         GenServer.stop(gen)
+        Logger.error("#{inspect(resp)}")
+        {:error, :request_error}
+    end
+  end
+
+  @spec start(String.t(), StartParams.t() | nil) ::
+          {:ok, String.t()} | {:error, :already_started | :not_found | :request_error}
+  def start(id, params \\ nil) do
+    url = Dockerex.get_url("/containers/#{id}/start", params)
+
+    case HTTPoison.post(url, "", %{}, []) do
+      {:ok, %HTTPoison.Response{status_code: 204}} ->
+        {:ok, id}
+
+      {:ok, %HTTPoison.Response{status_code: 304}} ->
+        {:error, :already_started}
+
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        {:error, :not_found}
+
+      resp ->
+        Logger.error("#{inspect(resp)}")
+        {:error, :request_error}
+    end
+  end
+
+  @spec stop(String.t(), StopParams.t() | nil) ::
+          {:ok, String.t()} | {:error, :already_stopped | :not_found | :request_error}
+  def stop(id, params \\ nil) do
+    url = Dockerex.get_url("/containers/#{id}/stop", params)
+    options = [timeout: :infinity, recv_timeout: :infinity]
+
+    case HTTPoison.post(url, "", %{}, options) do
+      {:ok, %HTTPoison.Response{status_code: 204}} ->
+        {:ok, id}
+
+      {:ok, %HTTPoison.Response{status_code: 304}} ->
+        {:error, :already_stopped}
+
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        {:error, :not_found}
+
+      resp ->
         Logger.error("#{inspect(resp)}")
         {:error, :request_error}
     end
