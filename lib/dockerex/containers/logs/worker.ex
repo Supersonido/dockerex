@@ -26,8 +26,8 @@ defmodule Dockerex.Containers.Logs.Worker do
     {:noreply, state}
   end
 
-  def handle_info(%HTTPoison.AsyncChunk{chunk: text}, %{pid: pid, ref: reference}) do
-    send(pid, {:ok, reference, text})
+  def handle_info(%HTTPoison.AsyncChunk{chunk: data}, %{pid: pid, ref: reference}) do
+    send(pid, {:ok, reference, data})
     {:noreply, %{pid: pid, ref: reference}}
   end
 
