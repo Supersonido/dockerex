@@ -5,6 +5,8 @@ defmodule Dockerex.Images.Types do
       alias Dockerex.Images.Types.ImageAbstract
       alias Dockerex.Images.Types.Image
       alias Dockerex.Images.Types.CreateParams
+      alias Dockerex.Images.Types.BuildParams
+      alias Dockerex.Images.Types.BuildError
       alias Dockerex.Containers.Types.PruneParams
       alias Dockerex.Containers.Types.PruneResponse
     end
@@ -133,6 +135,43 @@ defmodule Dockerex.Images.Types do
             repo: String.t(),
             tag: String.t(),
             platform: String.t()
+          }
+  end
+
+  defmodule BuildParams do
+    @type t :: %{
+            dockerfile: String.t(),
+            t: String.t(),
+            extrahosts: String.t(),
+            remote: String.t(),
+            q: boolean(),
+            nocache: boolean(),
+            cachefrom: [String.t()],
+            pull: String.t(),
+            rm: boolean(),
+            forcerm: boolean(),
+            memory: integer(),
+            memswap: integer(),
+            cpushares: integer(),
+            cpusetcpus: String.t(),
+            cpuperiod: integer(),
+            cpuquota: integer(),
+            buildargs: %{atom() => any()},
+            shmsize: integer(),
+            squash: boolean(),
+            labels: Labels.t(),
+            networkmode: String.t(),
+            platform: String.t()
+          }
+  end
+
+  defmodule BuildError do
+    @type t :: %{
+            error: String.t(),
+            errorDetail: %{
+              code: 1,
+              message: String.t()
+            }
           }
   end
 

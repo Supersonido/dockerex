@@ -62,28 +62,72 @@ defmodule Dockerex.Images do
     end
   end
 
-  @spec build(CreateParams.t(), binary() | nil, map()) ::
-          {:ok, String.t() | nil} | {:error, :bad_request, map()} | {:error, :request_error}
+  @spec build(BuildParams.t(), binary() | nil, map()) ::
+          {:ok, String.t() | nil}
+          | {:error, :bad_request, map()}
+          | {:error, :request_error}
+          | {:error, :build_error, BuildError.t()}
+
   def build(params, image \\ nil, registry_config \\ %{}) do
+    params =
+      case Map.get(params, :cachefrom, nil) do
+        nil ->
+          params
+
+        cf ->
+          Map.put(params, :cachefrom, Poison.encode!(cf))
+      end
+
+    params =
+      case Map.get(params, :buildargs, nil) do
+        nil ->
+          params
+
+        ba ->
+          Map.put(params, :buildargs, Poison.encode!(ba))
+      end
+
+    params =
+      case Map.get(params, :labels, nil) do
+        nil ->
+          params
+
+        l ->
+          Map.put(params, :labels, Poison.encode!(l))
+      end
+
     url = Dockerex.get_url("/build", params)
     headers = Dockerex.add_registry_config(registry_config)
 
     case HTTPoison.post(url, image || "", headers, []) do
       {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
-        IO.inspect(body)
+        Logger.debug(body)
+
+        body_split = String.split(body, "\r\n", trim: true)
+
+        error =
+          body_split
+          |> List.last()
+          |> Poison.decode!(keys: :atoms)
 
         info =
-          String.split(body, "\r\n", trim: true)
+          body_split
           |> List.delete_at(-1)
           |> List.last()
-          |> Poison.decode!()
+          |> Poison.decode!(keys: :atoms)
 
-        case info do
-          %{"aux" => %{"ID" => id}} ->
-            {:ok, id}
+        case error do
+          %{errorDetail: _} ->
+            {:error, :build_error, error}
 
           _ ->
-            {:ok, nil}
+            case info do
+              %{aux: %{ID: id}} ->
+                {:ok, id}
+
+              _ ->
+                {:ok, nil}
+            end
         end
 
       {:ok, %HTTPoison.Response{status_code: 400, body: body}} ->
