@@ -11,6 +11,7 @@ defmodule Dockerex.Containers.Types do
       alias Dockerex.Containers.Types.RemoveParams
       alias Dockerex.Containers.Types.PruneParams
       alias Dockerex.Containers.Types.PruneResponse
+      alias Dockerex.Containers.Types.WaitResponse
     end
   end
 
@@ -377,5 +378,9 @@ defmodule Dockerex.Containers.Types do
             ContainersDeleted: [String.t()] | nil,
             SpaceReclaimed: integer()
           }
+  end
+
+  defmodule WaitResponse do
+    @type t :: %{Error: [String.t()] | nil, StatusCode: 0}
   end
 end

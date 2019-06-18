@@ -217,4 +217,23 @@ defmodule Dockerex.Containers do
         {:error, :request_error}
     end
   end
+
+  @spec wait(String.t(), String.t() | nil) ::
+          {:ok, WaitResponse.t()} | {:error, :request_error | :not_found}
+  def wait(id, condition \\ nil) do
+    url = Dockerex.get_url("/containers/#{id}/wait", %{condition: condition})
+    options = [timeout: :infinity, recv_timeout: :infinity]
+
+    case HTTPoison.post(url, "", %{}, options) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        {:ok, Poison.decode!(body, keys: :atoms)}
+
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        {:error, :not_found}
+
+      resp ->
+        Logger.error("#{inspect(resp)}")
+        {:error, :request_error}
+    end
+  end
 end
