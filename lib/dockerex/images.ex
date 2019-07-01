@@ -98,8 +98,9 @@ defmodule Dockerex.Images do
 
     url = Dockerex.get_url("/build", params)
     headers = Dockerex.add_registry_config(registry_config)
+    options = Dockerex.add_options()
 
-    case HTTPoison.post(url, image || "", headers, []) do
+    case HTTPoison.post(url, image || "", headers, options) do
       {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
         Logger.debug(body)
 
@@ -152,7 +153,7 @@ defmodule Dockerex.Images do
       end
 
     url = Dockerex.get_url("/images/prune", params)
-    options = [timeout: :infinity, recv_timeout: :infinity]
+    options = Dockerex.add_options()
 
     case HTTPoison.post(url, "", %{}, options) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->

@@ -42,6 +42,11 @@ defmodule Dockerex do
     Map.put(headers, "X-Registry-Config", registry64)
   end
 
+  @spec add_options(Keyword.t()) :: Keyword.t()
+  def add_options(ops \\ []) do
+    Keyword.merge(ops, timeout: :infinity, recv_timeout: :infinity)
+  end
+
   defmodule Key do
     @type t :: atom() | String.t()
   end

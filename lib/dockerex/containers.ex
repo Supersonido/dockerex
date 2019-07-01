@@ -86,7 +86,7 @@ defmodule Dockerex.Containers do
   def logs(id, pid, params) do
     url = Dockerex.get_url("/containers/#{id}/logs", Map.put(params, :follow, true))
     {:ok, gen} = Dockerex.Containers.Logs.Supervisor.start_child(pid)
-    options = [stream_to: gen, timeout: :infinity, recv_timeout: :infinity]
+    options = Dockerex.add_options(stream_to: gen)
 
     case HTTPoison.get(url, %{}, options) do
       {:ok, %HTTPoison.AsyncResponse{id: reference}} ->
@@ -103,7 +103,7 @@ defmodule Dockerex.Containers do
           {:ok, String.t()} | {:error, :already_started | :not_found | :request_error}
   def start(id, params \\ nil) do
     url = Dockerex.get_url("/containers/#{id}/start", params)
-    options = [timeout: :infinity, recv_timeout: :infinity]
+    options = Dockerex.add_options()
 
     case HTTPoison.post(url, "", %{}, options) do
       {:ok, %HTTPoison.Response{status_code: 204}} ->
@@ -125,7 +125,7 @@ defmodule Dockerex.Containers do
           {:ok, String.t()} | {:error, :already_stopped | :not_found | :request_error}
   def stop(id, params \\ nil) do
     url = Dockerex.get_url("/containers/#{id}/stop", params)
-    options = [timeout: :infinity, recv_timeout: :infinity]
+    options = Dockerex.add_options()
 
     case HTTPoison.post(url, "", %{}, options) do
       {:ok, %HTTPoison.Response{status_code: 204}} ->
@@ -147,7 +147,7 @@ defmodule Dockerex.Containers do
           :ok | {:error, :not_running | :not_found | :request_error}
   def kill(id, signal \\ nil) do
     url = Dockerex.get_url("/containers/#{id}/kill", %{signal: signal})
-    options = [timeout: :infinity, recv_timeout: :infinity]
+    options = Dockerex.add_options()
 
     case HTTPoison.post(url, "", %{}, options) do
       {:ok, %HTTPoison.Response{status_code: 204}} ->
@@ -169,7 +169,7 @@ defmodule Dockerex.Containers do
           :ok | {:error, :running | :not_found | :request_error}
   def remove(id, params \\ nil) do
     url = Dockerex.get_url("/containers/#{id}", params)
-    options = [timeout: :infinity, recv_timeout: :infinity]
+    options = Dockerex.add_options()
 
     case HTTPoison.delete(url, %{}, options) do
       {:ok, %HTTPoison.Response{status_code: 204}} ->
@@ -200,7 +200,7 @@ defmodule Dockerex.Containers do
       end
 
     url = Dockerex.get_url("/containers/prune", params)
-    options = [timeout: :infinity, recv_timeout: :infinity]
+    options = Dockerex.add_options()
 
     case HTTPoison.post(url, "", %{}, options) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
@@ -222,7 +222,7 @@ defmodule Dockerex.Containers do
           {:ok, WaitResponse.t()} | {:error, :request_error | :not_found}
   def wait(id, condition \\ nil) do
     url = Dockerex.get_url("/containers/#{id}/wait", %{condition: condition})
-    options = [timeout: :infinity, recv_timeout: :infinity]
+    options = Dockerex.add_options()
 
     case HTTPoison.post(url, "", %{}, options) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
