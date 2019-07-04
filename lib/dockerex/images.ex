@@ -170,4 +170,26 @@ defmodule Dockerex.Images do
         {:error, :request_error}
     end
   end
+
+  @spec remove(String.t(), RemoveParams.t()) ::
+          {:ok, RemoveResponse.t()} | {:error, :conflict | :not_found | :request_error}
+  def remove(id, params \\ nil) do
+    url = Dockerex.get_url("/images/#{id}", params)
+    options = Dockerex.add_options()
+
+    case HTTPoison.delete(url, %{}, options) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        {:ok, Poison.decode!(body, keys: :atoms)}
+
+      {:ok, %HTTPoison.Response{status_code: 409}} ->
+        {:error, :conflict}
+
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        {:error, :not_found}
+
+      resp ->
+        Logger.error("#{inspect(resp)}")
+        {:error, :request_error}
+    end
+  end
 end

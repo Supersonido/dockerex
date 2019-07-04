@@ -7,8 +7,10 @@ defmodule Dockerex.Images.Types do
       alias Dockerex.Images.Types.CreateParams
       alias Dockerex.Images.Types.BuildParams
       alias Dockerex.Images.Types.BuildError
-      alias Dockerex.Containers.Types.PruneParams
-      alias Dockerex.Containers.Types.PruneResponse
+      alias Dockerex.Images.Types.PruneParams
+      alias Dockerex.Images.Types.PruneResponse
+      alias Dockerex.Images.Types.RemoveParams
+      alias Dockerex.Images.Types.RemoveResponse
     end
   end
 
@@ -195,5 +197,13 @@ defmodule Dockerex.Images.Types do
               | nil,
             SpaceReclaimed: integer()
           }
+  end
+
+  defmodule RemoveParams do
+    @type t :: %{force: boolean(), noprune: boolean()} | nil
+  end
+
+  defmodule RemoveResponse do
+    @type t :: [%{Untagged: String.t()} | %{Deleted: String.t()}]
   end
 end
