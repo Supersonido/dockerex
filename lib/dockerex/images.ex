@@ -49,7 +49,7 @@ defmodule Dockerex.Images do
     url = Dockerex.get_url("/images/create", params)
     headers = Dockerex.add_auth()
 
-    case HTTPoison.post(url, image, headers, []) do
+    case HTTPoison.post(url, image || "", headers, []) do
       {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
         {:ok, body}
 
