@@ -200,7 +200,12 @@ defmodule Dockerex.Images.Types do
   end
 
   defmodule RemoveParams do
-    @type t :: %{force: boolean(), noprune: boolean()} | nil
+    @type t ::
+            %{
+              optional(:force) => boolean(),
+              optional(:noprune) => boolean()
+            }
+            | nil
   end
 
   defmodule RemoveResponse do
