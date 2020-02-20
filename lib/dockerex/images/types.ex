@@ -132,11 +132,11 @@ defmodule Dockerex.Images.Types do
 
   defmodule CreateParams do
     @type t :: %{
-            fromImage: String.t(),
-            fromSrc: String.t(),
-            repo: String.t(),
-            tag: String.t(),
-            platform: String.t()
+            required(:fromImage) => String.t(),
+            optional(:fromSrc) => String.t(),
+            optional(:repo) => String.t(),
+            optional(:tag) => String.t(),
+            optional(:platform) => String.t()
           }
   end
 
