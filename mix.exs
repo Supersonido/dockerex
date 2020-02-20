@@ -25,7 +25,7 @@ defmodule Dockerex.MixProject do
       {:params, "~> 2.1"},
       {:httpoison, "~> 1.5"},
       {:poison, "~> 4.0"},
-      {:dialyxir, "~> 1.0.0-rc.6", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.0.0-rc.7", only: [:dev], runtime: false}
     ]
   end
 end
