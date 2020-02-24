@@ -132,38 +132,38 @@ defmodule Dockerex.Images.Types do
 
   defmodule CreateParams do
     @type t :: %{
-            fromImage: String.t(),
-            fromSrc: String.t(),
-            repo: String.t(),
-            tag: String.t(),
-            platform: String.t()
+            required(:fromImage) => String.t(),
+            optional(:fromSrc) => String.t(),
+            optional(:repo) => String.t(),
+            optional(:tag) => String.t(),
+            optional(:platform) => String.t()
           }
   end
 
   defmodule BuildParams do
     @type t :: %{
-            dockerfile: String.t(),
-            t: String.t(),
-            extrahosts: String.t(),
-            remote: String.t(),
-            q: boolean(),
-            nocache: boolean(),
-            cachefrom: [String.t()],
-            pull: String.t(),
-            rm: boolean(),
-            forcerm: boolean(),
-            memory: integer(),
-            memswap: integer(),
-            cpushares: integer(),
-            cpusetcpus: String.t(),
-            cpuperiod: integer(),
-            cpuquota: integer(),
-            buildargs: %{atom() => any()},
-            shmsize: integer(),
-            squash: boolean(),
-            labels: Labels.t(),
-            networkmode: String.t(),
-            platform: String.t()
+            optional(:dockerfile) => String.t(),
+            optional(:t) => String.t(),
+            optional(:extrahosts) => String.t(),
+            optional(:remote) => String.t(),
+            optional(:q) => boolean(),
+            optional(:nocache) => boolean(),
+            optional(:cachefrom) => [String.t()],
+            optional(:pull) => String.t(),
+            optional(:rm) => boolean(),
+            optional(:forcerm) => boolean(),
+            optional(:memory) => integer(),
+            optional(:memswap) => integer(),
+            optional(:cpushares) => integer(),
+            optional(:cpusetcpus) => String.t(),
+            optional(:cpuperiod) => integer(),
+            optional(:cpuquota) => integer(),
+            optional(:buildargs) => %{atom() => any()},
+            optional(:shmsize) => integer(),
+            optional(:squash) => boolean(),
+            optional(:labels) => Labels.t(),
+            optional(:networkmode) => String.t(),
+            optional(:platform) => String.t()
           }
   end
 
@@ -200,7 +200,12 @@ defmodule Dockerex.Images.Types do
   end
 
   defmodule RemoveParams do
-    @type t :: %{force: boolean(), noprune: boolean()} | nil
+    @type t ::
+            %{
+              optional(:force) => boolean(),
+              optional(:noprune) => boolean()
+            }
+            | nil
   end
 
   defmodule RemoveResponse do
