@@ -236,4 +236,53 @@ defmodule Dockerex.Containers do
         {:error, :request_error}
     end
   end
+
+  @spec get_archive(String.t(), GetArchiveParams.t()) ::
+          {:ok, binary()} | {:error, :bad_request | :not_found | :request_error}
+  def get_archive(id, params) do
+    url = Dockerex.get_url("/containers/#{id}/archive", params)
+    headers = Dockerex.headers()
+    options = Dockerex.add_options()
+
+    case HTTPoison.get(url, headers, options) do
+      {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
+        {:ok, body}
+
+      {:ok, %HTTPoison.Response{status_code: 400, body: body}} ->
+        {:error, :bad_request, Poison.decode!(body)}
+
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        {:error, :not_found}
+
+      resp ->
+        Logger.error("#{inspect(resp)}")
+        {:error, :request_error}
+    end
+  end
+
+  @spec put_archive(String.t(), binary(), PutArchiveParams.t()) ::
+          :ok | {:error, :bad_request | :not_found | :request_error | :forbidden}
+  def put_archive(id, body, params) do
+    url = Dockerex.get_url("/containers/#{id}/archive", params)
+    headers = Dockerex.headers()
+    options = Dockerex.add_options()
+
+    case HTTPoison.put(url, body, headers, options) do
+      {:ok, %HTTPoison.Response{status_code: 200}} ->
+        :ok
+
+      {:ok, %HTTPoison.Response{status_code: 400, body: body}} ->
+        {:error, :bad_request, Poison.decode!(body)}
+
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        {:error, :not_found}
+
+      {:ok, %HTTPoison.Response{status_code: 403}} ->
+        {:error, :forbidden}
+
+      resp ->
+        Logger.error("#{inspect(resp)}")
+        {:error, :request_error}
+    end
+  end
 end

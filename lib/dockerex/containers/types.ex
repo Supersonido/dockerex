@@ -12,6 +12,8 @@ defmodule Dockerex.Containers.Types do
       alias Dockerex.Containers.Types.PruneParams
       alias Dockerex.Containers.Types.PruneResponse
       alias Dockerex.Containers.Types.WaitResponse
+      alias Dockerex.Containers.Types.GetArchiveParams
+      alias Dockerex.Containers.Types.PutArchiveParams
     end
   end
 
@@ -382,5 +384,17 @@ defmodule Dockerex.Containers.Types do
 
   defmodule WaitResponse do
     @type t :: %{Error: [String.t()] | nil, StatusCode: 0}
+  end
+
+  defmodule GetArchiveParams do
+    @type t :: %{path: String.t()}
+  end
+
+  defmodule PutArchiveParams do
+    @type t :: %{
+            required(:path) => String.t(),
+            optional(:noOverwriteDirNonDir) => boolean(),
+            optional(:copyUIDGID) => boolean()
+          }
   end
 end
