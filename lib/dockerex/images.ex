@@ -44,7 +44,9 @@ defmodule Dockerex.Images do
   end
 
   @spec create(CreateParams.t(), binary() | nil) ::
-          {:ok, String.t()} | {:error, :bad_request, map()} | {:error, :request_error}
+          {:ok, String.t()}
+          | {:error, :bad_request | :not_found, map()}
+          | {:error, :request_error}
   def create(params, image \\ nil) do
     url = Dockerex.get_url("/images/create", params)
     headers = Dockerex.add_auth()
@@ -56,6 +58,9 @@ defmodule Dockerex.Images do
       {:ok, %HTTPoison.Response{status_code: 400, body: body}} ->
         {:error, :bad_request, Poison.decode!(body)}
 
+      {:ok, %HTTPoison.Response{status_code: 404, body: body}} ->
+        {:error, :not_found, Poison.decode!(body)}
+
       resp ->
         Logger.error("#{inspect(resp)}")
         {:error, :request_error}
@@ -63,7 +68,7 @@ defmodule Dockerex.Images do
   end
 
   @spec build(BuildParams.t(), binary() | nil, map()) ::
-          {:ok, String.t() | nil}
+          {:ok, String.t() | nil, String.t()}
           | {:error, :bad_request, map()}
           | {:error, :request_error}
           | {:error, :build_error, BuildError.t()}
@@ -124,10 +129,10 @@ defmodule Dockerex.Images do
           _ ->
             case info do
               %{aux: %{ID: id}} ->
-                {:ok, id}
+                {:ok, id, body}
 
               _ ->
-                {:ok, nil}
+                {:ok, nil, body}
             end
         end
 
