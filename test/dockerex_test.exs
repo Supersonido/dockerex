@@ -2,7 +2,7 @@ defmodule DockerexTest do
   use ExUnit.Case
   doctest Dockerex
 
-  test "greets the world" do
-    assert Dockerex.hello() == :world
+  test "Docker version" do
+    assert Dockerex.docker_version() == "v1.37"
   end
 end

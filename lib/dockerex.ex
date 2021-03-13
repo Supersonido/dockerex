@@ -1,6 +1,11 @@
 defmodule Dockerex do
   @version "v1.37"
 
+  @doc """
+  Returns the docker version the library is using.
+  """
+  def docker_version(), do: @version
+
   @spec get_url(String.t(), map() | nil) :: String.t()
   def get_url(endpoint \\ "", query \\ nil) do
     conf = Application.get_env(:dockerex, :url, "http://127.0.0.1:2375/")
