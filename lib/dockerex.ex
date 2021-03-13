@@ -3,8 +3,14 @@ defmodule Dockerex do
 
   @doc """
   Returns the docker version the library is using.
+
+  ## Examples
+
+  iex> Dockerex.api_version()
+  "v1.37"
+
   """
-  def docker_version(), do: @version
+  def api_version(), do: @version
 
   @spec get_url(String.t(), map() | nil) :: String.t()
   def get_url(endpoint \\ "", query \\ nil) do
