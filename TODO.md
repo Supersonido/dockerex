@@ -1,0 +1,1 @@
+- Functions in Dockerex module should not be exposed, move them to an "internal" module.
