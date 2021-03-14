@@ -1,5 +1,8 @@
 defmodule Dockerex do
+  require Logger
+
   @version "v1.37"
+  @progress_keys [:stream, :error, :errorDetail, :status, :aux]
 
   @doc """
   Returns the docker version the library is using.
@@ -11,6 +14,59 @@ defmodule Dockerex do
 
   """
   def api_version(), do: @version
+
+  @doc """
+  For some endpoints, the response contains a progress
+  information. This function process the response and returns a keywords structure.
+
+  ## Examples
+
+  iex> Dockerex.decode_progress("")
+  []
+
+  iex> Dockerex.decode_progress("{\\"stream\\":\\"Hola\\"}")
+  [%{stream: "Hola"}]
+
+  iex> Dockerex.decode_progress("{\\"stream\\":\\"Step 1/1 : FROM ubuntu:20.04\\"}\\r\\n{\\"status\\":\\"Pulling from library/ubuntu\\",\\"id\\":\\"20.04\\"}\\r\\n{\\"stream\\":\\"\\\\n\\"}\\r\\n{\\"stream\\":\\" ---\\\\u003e 4dd97cefde62\\\\n\\"}\\r\\n{\\"aux\\":{\\"ID\\":\\"sha256:4dd97cefde62cf2d6bcfd8f2c0300a24fbcddbe0ebcd577cc8b420c29106869a\\"}}\\r\\n{\\"stream\\":\\"Successfully built 4dd97cefde62\\\\n\\"}\\r\\n")
+  [
+    %{stream: "Step 1/1 : FROM ubuntu:20.04"},
+    %{status: "Pulling from library/ubuntu", id: "20.04"},
+    %{stream: "\n"},
+    %{stream: " ---> 4dd97cefde62\n"},
+    %{aux: %{ID: "sha256:4dd97cefde62cf2d6bcfd8f2c0300a24fbcddbe0ebcd577cc8b420c29106869a"}},
+    %{stream: "Successfully built 4dd97cefde62\n"}
+  ]
+  """
+  @spec decode_progress(response :: String.t()) :: [Poison.Decode.t()]
+  def decode_progress(response) do
+    for line <- String.split(response, "\r\n", trim: true) do
+      progress_line = Poison.decode!(line, keys: :atoms)
+
+      if is_map(progress_line) do
+        for key <- @progress_keys,
+            Map.has_key?(progress_line, key) do
+          key
+        end
+        |> case do
+          [] ->
+            "No valid key found in #{inspect(line)}"
+            |> Logger.error()
+
+          [_, _ | _] ->
+            "More than one valid key found in #{inspect(line)}"
+            |> Logger.error()
+
+          _ ->
+            :ok
+        end
+      else
+        "No json object found: #{inspect(line)}"
+        |> Logger.error()
+      end
+
+      progress_line
+    end
+  end
 
   @spec get_url(String.t(), map() | nil) :: String.t()
   def get_url(endpoint \\ "", query \\ nil) do

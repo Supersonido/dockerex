@@ -107,33 +107,35 @@ defmodule Dockerex.Images do
 
     case HTTPoison.post(url, image || "", headers, options) do
       {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
-        Logger.debug(body)
+        progress = Dockerex.decode_progress(body)
 
-        body_split = String.split(body, "\r\n", trim: true)
+        errors =
+          for progress_line <- progress,
+              Map.has_key?(progress_line, :errorDetail) or Map.has_key?(progress_line, :error) do
+            progress_line
+          end
 
-        error =
-          body_split
-          |> List.last()
-          |> Poison.decode!(keys: :atoms)
+        case errors do
+          [] ->
+            error = "Cannot extract image ID from digest in #{inspect(body)}"
 
-        info =
-          body_split
-          |> List.delete_at(-1)
-          |> List.last()
-          |> Poison.decode!(keys: :atoms)
+            auxs =
+              for progress_line <- progress,
+                  Map.has_key?(progress_line, :aux) do
+                progress_line[:aux]
+              end
 
-        case error do
-          %{errorDetail: _} ->
-            {:error, :build_error, error}
-
-          _ ->
-            case info do
-              %{aux: %{ID: id}} ->
+            case auxs do
+              [%{ID: id} | _] ->
                 {:ok, id, body}
 
               _ ->
-                {:ok, nil, body}
+                Logger.error(error)
+                {:error, :build_error, error}
             end
+
+          [error1 | _errors] ->
+            {:error, :build_error, error1}
         end
 
       {:ok, %HTTPoison.Response{status_code: 400, body: body}} ->
