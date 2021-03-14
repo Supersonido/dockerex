@@ -139,7 +139,7 @@ defmodule Dockerex.Images do
         end
 
       {:ok, %HTTPoison.Response{status_code: 400, body: body}} ->
-        {:error, :bad_request, Poison.decode!(body)}
+        {:error, :bad_request, Poison.decode!(body, keys: :atoms)}
 
       resp ->
         Logger.error("#{inspect(resp)}")

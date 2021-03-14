@@ -66,10 +66,7 @@ defmodule DockerexTest do
              ] == decoded_progress
     end
 
-    captured_log = capture_log(decode_progress_with_errors)
-
-    assert captured_log =~ "No valid key found"
-    assert captured_log =~ "More than one valid key found"
+    assert capture_log(decode_progress_with_errors) =~ "No valid key found"
   end
 
   test "Container built from Dockerfile" do
@@ -96,5 +93,66 @@ defmodule DockerexTest do
     assert {:ok, stream} = File.read(tar_filename)
 
     assert {:ok, "sha256:" <> _id, _body} = Images.build(%{}, stream)
+  end
+
+  test "Container built from Dockerfile with syntax errors" do
+    tmp_dirname = "/tmp/dockerex"
+
+    assert is_list(File.rm_rf!(tmp_dirname))
+    assert :ok == File.mkdir_p!(tmp_dirname)
+
+    dockerfile = """
+    FRO ubuntu:17.04
+    """
+
+    dockerfile_filename = Path.join([tmp_dirname, "Dockerfile"])
+
+    tar_filename = Path.join([tmp_dirname, "dockerex.tar"])
+
+    assert :ok == File.write!(Path.join([tmp_dirname, "Dockerfile"]), dockerfile)
+
+    assert :ok ==
+             :erl_tar.create(tar_filename, [
+               {String.to_charlist("Dockerfile"), String.to_charlist(dockerfile_filename)}
+             ])
+
+    assert {:ok, stream} = File.read(tar_filename)
+
+    assert {:error, :bad_request,
+            %{message: "dockerfile parse error line 1: unknown instruction: FRO"}} ==
+             Images.build(%{}, stream)
+  end
+
+  test "Container built from Dockerfile with semantic errors" do
+    tmp_dirname = "/tmp/dockerex"
+
+    assert is_list(File.rm_rf!(tmp_dirname))
+    assert :ok == File.mkdir_p!(tmp_dirname)
+
+    dockerfile = """
+    FROM ubuntu:17
+    """
+
+    dockerfile_filename = Path.join([tmp_dirname, "Dockerfile"])
+
+    tar_filename = Path.join([tmp_dirname, "dockerex.tar"])
+
+    assert :ok == File.write!(Path.join([tmp_dirname, "Dockerfile"]), dockerfile)
+
+    assert :ok ==
+             :erl_tar.create(tar_filename, [
+               {String.to_charlist("Dockerfile"), String.to_charlist(dockerfile_filename)}
+             ])
+
+    assert {:ok, stream} = File.read(tar_filename)
+
+    assert {:error, :build_error,
+            %{
+              error: "manifest for ubuntu:17 not found: manifest unknown: manifest unknown",
+              errorDetail: %{
+                message: "manifest for ubuntu:17 not found: manifest unknown: manifest unknown"
+              }
+            }} ==
+             Images.build(%{}, stream)
   end
 end

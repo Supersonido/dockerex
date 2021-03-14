@@ -43,21 +43,15 @@ defmodule Dockerex do
       progress_line = Poison.decode!(line, keys: :atoms)
 
       if is_map(progress_line) do
-        for key <- @progress_keys,
-            Map.has_key?(progress_line, key) do
-          key
-        end
-        |> case do
-          [] ->
-            "No valid key found in #{inspect(line)}"
-            |> Logger.error()
+        valid_keys =
+          for key <- @progress_keys,
+              Map.has_key?(progress_line, key) do
+            key
+          end
 
-          [_, _ | _] ->
-            "More than one valid key found in #{inspect(line)}"
-            |> Logger.error()
-
-          _ ->
-            :ok
+        if valid_keys == [] do
+          "No valid key found in #{inspect(line)}"
+          |> Logger.error()
         end
       else
         "No json object found: #{inspect(line)}"
