@@ -69,7 +69,7 @@ defmodule DockerexTest do
     assert capture_log(decode_progress_with_errors) =~ "No valid key found"
   end
 
-  test "Container built from Dockerfile" do
+  test "Image built from Dockerfile" do
     tmp_dirname = "/tmp/dockerex"
 
     assert is_list(File.rm_rf!(tmp_dirname))
@@ -95,7 +95,7 @@ defmodule DockerexTest do
     assert {:ok, "sha256:" <> _id, _body} = Images.build(%{}, stream)
   end
 
-  test "Container built from Dockerfile with syntax errors" do
+  test "Image built from Dockerfile with syntax errors" do
     tmp_dirname = "/tmp/dockerex"
 
     assert is_list(File.rm_rf!(tmp_dirname))
@@ -123,7 +123,7 @@ defmodule DockerexTest do
              Images.build(%{}, stream)
   end
 
-  test "Container built from Dockerfile with semantic errors" do
+  test "Image built from Dockerfile with semantic errors" do
     tmp_dirname = "/tmp/dockerex"
 
     assert is_list(File.rm_rf!(tmp_dirname))
@@ -154,5 +154,46 @@ defmodule DockerexTest do
               }
             }} ==
              Images.build(%{}, stream)
+  end
+
+  test "Image: create, get, and remove" do
+    assert {:ok, _progress} = Images.create(fromImage: "ubuntu:18.04")
+
+    assert {:ok, %{RepoTags: ["ubuntu:18.04"]}} = Images.get("ubuntu:18.04")
+
+    assert {:ok, [%{Untagged: "ubuntu:18.04"} | _]} =
+             Images.remove("ubuntu:18.04", %{force: true, noprune: true})
+
+    assert {:error, :not_found, %{message: _message}} = Images.get("ubuntu:18.04")
+  end
+
+  test "Image creation error" do
+    image = "non_existent_image_in_registry"
+    assert {:error, :not_found, %{message: message}} = Images.create(fromImage: image)
+    assert message =~ image
+  end
+
+  test "Image: get non existent image" do
+    image = "non_existent_image_in_registry"
+    assert {:error, :not_found, %{message: message}} = Images.get(image)
+    assert message =~ image
+  end
+
+  test "Image: remove non existent image" do
+    image = "non_existent_image_in_registry"
+    assert {:error, :not_found, %{message: message}} = Images.remove(image)
+    assert message =~ image
+  end
+
+  test "Tests to be added based on the used container interface from deliverit" do
+    # Uses of Dockerex from deliverit: Containers
+    #   {:ok, %{Id: container}} = Containers.create(nil, ops)
+    #   {:ok, save} = Containers.get_archive(last_container, %{path: dir})
+    #     :ok = Containers.put_archive(container, save, %{path: "/"})
+    # {:ok, _} = Containers.start(container)
+    # :timer.apply_after(5000 * 60, Dockerex.Containers, :kill, [container])
+    # exit = Containers.wait(container)
+    # {:ok, logs} = Containers.logs(container, nil, %{stdout: true})
+    #       Containers.remove(container, %{force: true})
   end
 end
