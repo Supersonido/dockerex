@@ -4,6 +4,19 @@ defmodule Dockerex do
   @version "v1.37"
   @progress_keys [:stream, :error, :errorDetail, :status, :aux]
 
+  @type engine_ok() ::
+          {:ok, map() | [map()]}
+
+  @type engine_err() ::
+          {:error, :bad_request | :not_found | :internal_server_error | :request_error, map()}
+
+  @type httpoison_resp() ::
+          {:ok,
+           HTTPoison.Response.t()
+           | HTTPoison.AsyncResponse.t()
+           | HTTPoison.MaybeRedirect.t()}
+          | {:error, HTTPoison.Error.t()}
+
   @doc """
   Returns the docker version the library is using.
 
@@ -37,9 +50,9 @@ defmodule Dockerex do
     %{stream: "Successfully built 4dd97cefde62\n"}
   ]
   """
-  @spec decode_progress(response :: String.t()) :: [Poison.Decode.t()]
-  def decode_progress(response) do
-    for line <- String.split(response, "\r\n", trim: true) do
+  @spec decode_progress(body :: String.t()) :: [Poison.Decoder.t()]
+  def decode_progress(body) do
+    for line <- String.split(body, "\r\n", trim: true) do
       progress_line = Poison.decode!(line, keys: :atoms)
 
       if is_map(progress_line) do
@@ -110,5 +123,57 @@ defmodule Dockerex do
 
   defmodule Key do
     @type t :: atom() | String.t()
+  end
+
+  @doc """
+  Processes HTTPoison responses. If opts[:progress] is not falsy,
+  response body is assume to be of type "progress", like
+
+        {"stream":"Step 1/1 : FROM ubuntu:20.04"}\r
+        {"status":"Pulling from library/ubuntu","id":"20.04"}\r
+        ...
+
+  Returns a data that is close to Docker Engine API responses.
+  """
+  @spec process_httpoison_resp(httpoison_resp()) :: engine_ok() | engine_err()
+  def process_httpoison_resp(response, opts \\ nil) do
+    opts = opts || []
+
+    case response do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        decoded =
+          if opts[:progress] do
+            decode_progress(body)
+          else
+            Poison.decode!(body, keys: :atoms)
+          end
+
+        {:ok, decoded}
+
+      {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
+        decoded = Poison.decode!(body, keys: :atoms)
+
+        error =
+          case code do
+            400 -> :bad_request
+            404 -> :not_found
+            500 -> :internal_server_error
+          end
+
+        {:error, error, decoded}
+
+      {:error, %HTTPoison.Error{id: _id, reason: reason}} ->
+        Logger.error("HTTP Client Error: #{inspect(reason)}")
+
+        {:error, :request_error,
+         %{
+           reason:
+             if is_binary(reason) do
+               reason
+             else
+               inspect(reason)
+             end
+         }}
+    end
   end
 end
