@@ -1,7 +1,13 @@
 defmodule Dockerex.Containers do
+  @moduledoc """
+  Module that interfaces the containers related API of the Docker Engine
+  API. See https://docs.docker.com/engine/api/ for more information.
+  """
+
   require Logger
   use Dockerex.Containers.Types
 
+  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
   @spec list(ListParams.t() | nil) ::
           {:ok, [ContainerAbstract.t()]} | {:error, :request_error | :bad_request}
   def list(options \\ nil) do
@@ -28,6 +34,7 @@ defmodule Dockerex.Containers do
     end
   end
 
+  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
   @spec get(String.t()) :: {:ok, Container.t()} | {:error, :request_error | :not_found}
   def get(id) do
     case HTTPoison.get(Dockerex.get_url("/containers/#{id}/json")) do
@@ -43,6 +50,7 @@ defmodule Dockerex.Containers do
     end
   end
 
+  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
   @spec create(String.t() | nil, CreateContainer.t()) ::
           {:ok, CreateContainerResponse.t()} | {:error, :request_error | :not_found}
   def create(name, params) do
@@ -65,6 +73,7 @@ defmodule Dockerex.Containers do
     end
   end
 
+  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
   @spec logs(String.t(), pid() | nil, map()) ::
           {:ok, binary()} | {:error, :not_found | :request_error}
   def logs(id, nil, params) do
@@ -99,6 +108,7 @@ defmodule Dockerex.Containers do
     end
   end
 
+  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
   @spec start(String.t(), StartParams.t() | nil) ::
           {:ok, String.t()} | {:error, :already_started | :not_found | :request_error}
   def start(id, params \\ nil) do
@@ -121,6 +131,7 @@ defmodule Dockerex.Containers do
     end
   end
 
+  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
   @spec stop(String.t(), StopParams.t() | nil) ::
           {:ok, String.t()} | {:error, :already_stopped | :not_found | :request_error}
   def stop(id, params \\ nil) do
@@ -143,6 +154,7 @@ defmodule Dockerex.Containers do
     end
   end
 
+  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
   @spec kill(String.t(), String.t() | nil) ::
           :ok | {:error, :not_running | :not_found | :request_error}
   def kill(id, signal \\ nil) do
@@ -165,6 +177,7 @@ defmodule Dockerex.Containers do
     end
   end
 
+  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
   @spec remove(String.t(), RemoveParams.t() | nil) ::
           :ok | {:error, :running | :not_found | :request_error}
   def remove(id, params \\ nil) do
@@ -187,6 +200,7 @@ defmodule Dockerex.Containers do
     end
   end
 
+  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
   @spec prune(PruneParams.t() | nil) :: {:ok, PruneResponse.t()} | {:error, :request_error}
   def prune(params \\ nil) do
     params =
@@ -218,6 +232,7 @@ defmodule Dockerex.Containers do
     end
   end
 
+  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
   @spec wait(String.t(), String.t() | nil) ::
           {:ok, WaitResponse.t()} | {:error, :request_error | :not_found}
   def wait(id, condition \\ nil) do
@@ -237,6 +252,7 @@ defmodule Dockerex.Containers do
     end
   end
 
+  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
   @spec get_archive(String.t(), GetArchiveParams.t()) ::
           {:ok, binary()} | {:error, :bad_request | :not_found | :request_error}
   def get_archive(id, params) do
@@ -260,6 +276,7 @@ defmodule Dockerex.Containers do
     end
   end
 
+  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
   @spec put_archive(String.t(), binary(), PutArchiveParams.t()) ::
           :ok | {:error, :bad_request | :not_found | :request_error | :forbidden}
   def put_archive(id, body, params) do

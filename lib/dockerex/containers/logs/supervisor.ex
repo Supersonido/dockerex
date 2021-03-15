@@ -1,4 +1,6 @@
 defmodule Dockerex.Containers.Logs.Supervisor do
+  @moduledoc false
+
   use DynamicSupervisor
   alias Dockerex.Containers.Logs.Worker
 

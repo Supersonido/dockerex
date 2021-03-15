@@ -1,4 +1,9 @@
 defmodule Dockerex.Containers.Types do
+  @moduledoc """
+  Module with the request and responses types when interfacing the container related API.
+
+  Using the module makes all types available.
+  """
   defmacro __using__(_) do
     quote do
       alias Dockerex.Containers.Types.ListParams
