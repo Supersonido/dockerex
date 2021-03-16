@@ -5,7 +5,7 @@ defmodule Dockerex do
   @progress_keys [:stream, :error, :errorDetail, :status, :aux]
 
   @type engine_ok() ::
-          {:ok, <<>> | map() | [map()]}
+          {:ok, reference() | <<>> | map() | [map()]}
 
   @type http_const() ::
           :not_modified
@@ -193,6 +193,9 @@ defmodule Dockerex do
     opts = opts || []
 
     case response do
+      {:ok, %HTTPoison.AsyncResponse{id: reference}} ->
+        {:ok, reference}
+
       {:ok, %HTTPoison.Response{status_code: code, body: body}} when 200 <= code and code < 300 ->
         decoded =
           case opts[:decoder] do
