@@ -43,7 +43,8 @@ defmodule Dockerex do
 
   @doc """
   For some endpoints, the response contains a progress
-  information. This function process the response and returns a keywords structure.
+  information. This function process the response and
+  returns the details of the progress.
 
   ## Examples
 
