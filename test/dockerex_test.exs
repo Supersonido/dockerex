@@ -248,7 +248,7 @@ defmodule DockerexTest do
     assert {:ok, %{Error: nil, StatusCode: 0}} = Containers.wait(id)
     assert {:ok, logs} = Containers.logs(id)
     assert [frame | _frames] = logs
-    assert %{data: ".:\n", size: 3, stream_type: :stdout} = frame
+    assert %{output: ".:\n", size: 3, stream_type: :stdout} = frame
 
     ## Since command has already finished and the container is stopped, stop will fail
     assert {:error, :not_modified, nil} = Containers.stop(id)

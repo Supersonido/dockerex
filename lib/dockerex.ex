@@ -27,7 +27,7 @@ defmodule Dockerex do
   @type frame() :: %{
           stream_type: :stdin | :stdout | :stderr,
           size: non_neg_integer(),
-          data: binary()
+          output: binary()
         }
 
   @doc """
@@ -100,8 +100,8 @@ defmodule Dockerex do
 
   iex> Dockerex.decode_logs(<<1, 0, 0, 0, 0, 0, 0, 3, 46, 58, 10, 1, 0, 0, 0, 0, 0, 0, 9, 116, 111, 116, 97, 108, 32, 55, 50, 10>>)
   [
-    %{stream_type: :stdout, size: 3, data: ".:\n"},
-    %{stream_type: :stdout, size: 9, data: "total 72\n"}
+    %{stream_type: :stdout, size: 3, output: ".:\n"},
+    %{stream_type: :stdout, size: 9, output: "total 72\n"}
   ]
   """
   @spec decode_logs(binary()) :: [frame()]
@@ -116,7 +116,7 @@ defmodule Dockerex do
 
   @spec decode_frame(binary()) :: {frame(), binary()}
   defp decode_frame(<<stream_type, 0, 0, 0, size::32, frame_and_logs::binary>>) do
-    <<data::binary-size(size), logs::binary>> = frame_and_logs
+    <<output::binary-size(size), logs::binary>> = frame_and_logs
 
     stream_type =
       case stream_type do
@@ -125,7 +125,7 @@ defmodule Dockerex do
         2 -> :stderr
       end
 
-    {%{stream_type: stream_type, size: size, data: data}, logs}
+    {%{stream_type: stream_type, size: size, output: output}, logs}
   end
 
   @spec get_url(String.t(), map() | nil) :: String.t()
