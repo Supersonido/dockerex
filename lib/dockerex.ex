@@ -5,7 +5,7 @@ defmodule Dockerex do
   @progress_keys [:stream, :error, :errorDetail, :status, :aux]
 
   @type engine_ok() ::
-          {:ok, map() | [map()]}
+          {:ok, <<>> | map() | [map()]}
 
   @type http_const() ::
           :not_modified
@@ -188,7 +188,7 @@ defmodule Dockerex do
 
   Returns a data that is close to Docker Engine API responses.
   """
-  @spec process_httpoison_resp(httpoison_resp(), Keyword.t()) :: engine_ok() | engine_err()
+  @spec process_httpoison_resp(httpoison_resp(), Keyword.t() | nil) :: engine_ok() | engine_err()
   def process_httpoison_resp(response, opts \\ nil) do
     opts = opts || []
 
@@ -243,6 +243,10 @@ defmodule Dockerex do
                inspect(reason)
              end
          }}
+
+      _ ->
+        Logger.error("Unexpected response from server: #{inspect(response)}")
+        {:error, :unexpected_response, %{message: inspect(response)}}
     end
   end
 end
