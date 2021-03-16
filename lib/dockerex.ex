@@ -24,6 +24,12 @@ defmodule Dockerex do
            | HTTPoison.MaybeRedirect.t()}
           | {:error, HTTPoison.Error.t()}
 
+  @type frame() :: %{
+          stream_type: :stdin | :stdout | :stderr,
+          size: non_neg_integer(),
+          data: binary()
+        }
+
   @doc """
   Returns the docker version the library is using.
 
@@ -80,6 +86,45 @@ defmodule Dockerex do
 
       progress_line
     end
+  end
+
+  @doc """
+  For some endpoints, the response contains logs following a "stream format".
+  This function process the response and returns the "frames".
+
+  ## Examples
+
+  iex> Dockerex.decode_logs(<<>>)
+  []
+
+  iex> Dockerex.decode_logs(<<1, 0, 0, 0, 0, 0, 0, 3, 46, 58, 10, 1, 0, 0, 0, 0, 0, 0, 9, 116, 111, 116, 97, 108, 32, 55, 50, 10>>)
+  [
+    %{stream_type: :stdout, size: 3, data: ".:\n"},
+    %{stream_type: :stdout, size: 9, data: "total 72\n"}
+  ]
+  """
+  @spec decode_logs(binary()) :: [frame()]
+  def decode_logs(<<>>) do
+    []
+  end
+
+  def decode_logs(logs) do
+    {frame, frames} = decode_frame(logs)
+    [frame | decode_logs(frames)]
+  end
+
+  @spec decode_frame(binary()) :: {frame(), binary()}
+  defp decode_frame(<<stream_type, 0, 0, 0, size::32, frame_and_logs::binary>>) do
+    <<data::binary-size(size), logs::binary>> = frame_and_logs
+
+    stream_type =
+      case stream_type do
+        0 -> :stdin
+        1 -> :stdout
+        2 -> :stderr
+      end
+
+    {%{stream_type: stream_type, size: size, data: data}, logs}
   end
 
   @spec get_url(String.t(), map() | nil) :: String.t()
@@ -155,6 +200,9 @@ defmodule Dockerex do
 
             :progress ->
               decode_progress(body)
+
+            :logs ->
+              decode_logs(body)
 
             other when other == nil or other == :json ->
               Poison.decode!(body, keys: :atoms)
