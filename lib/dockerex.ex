@@ -212,7 +212,12 @@ defmodule Dockerex do
         {:ok, decoded}
 
       {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
-        decoded = Poison.decode!(body, keys: :atoms)
+        decoded =
+          if body == "" do
+            nil
+          else
+            Poison.decode!(body, keys: :atoms)
+          end
 
         error =
           case code do
