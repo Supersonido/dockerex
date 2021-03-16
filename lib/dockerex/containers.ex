@@ -72,6 +72,7 @@ defmodule Dockerex.Containers do
     |> Dockerex.process_httpoison_resp(decoder: :logs)
   end
 
+  # TODO(AH): adapt this clause to Dockerex.process_httpoison_resp
   def logs(id, pid, params) do
     url = Dockerex.get_url("/containers/#{id}/logs", Map.put(params, :follow, true))
     {:ok, gen} = Dockerex.Containers.Logs.Supervisor.start_child(pid)
