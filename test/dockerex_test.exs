@@ -265,5 +265,24 @@ defmodule DockerexTest do
 
     assert :ok = Containers.start(id)
     assert :ok = Containers.stop(id)
+
+    assert {:ok, after_stop} = Containers.get(id)
+    assert %{ExitCode: 0, Status: "exited"} = after_stop[:State]
+  end
+
+  test "Start and kill a container" do
+    assert {:ok, _progress} = Images.create(fromImage: "ubuntu:18.04")
+
+    assert {:ok, %{Id: id}} =
+             Containers.create(nil, %{Image: "ubuntu:18.04", Cmd: ["ls", "-alR"]})
+
+    ## Since container was not started, kill fails
+    assert {:error, :conflict, %{message: message}} = Containers.kill(id)
+    assert message =~ "is not running"
+
+    assert :ok = Containers.start(id)
+    assert :ok = Containers.kill(id)
+    assert {:ok, after_kill} = Containers.get(id)
+    assert %{ExitCode: 137, Status: "exited"} = after_kill[:State]
   end
 end

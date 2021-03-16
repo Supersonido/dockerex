@@ -121,26 +121,20 @@ defmodule Dockerex.Containers do
     end
   end
 
-  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
+  @doc """
+  Send a POSIX signal to a container, defaulting to killing to the container.
+  """
   @spec kill(String.t(), String.t() | nil) ::
           :ok | {:error, :not_running | :not_found | :request_error}
   def kill(id, signal \\ nil) do
     url = Dockerex.get_url("/containers/#{id}/kill", %{signal: signal})
     options = Dockerex.add_options()
 
-    case HTTPoison.post(url, "", %{}, options) do
-      {:ok, %HTTPoison.Response{status_code: 204}} ->
-        {:ok, id}
-
-      {:ok, %HTTPoison.Response{status_code: 409}} ->
-        {:error, :already_stopped}
-
-      {:ok, %HTTPoison.Response{status_code: 404}} ->
-        {:error, :not_found}
-
-      resp ->
-        Logger.error("#{inspect(resp)}")
-        {:error, :request_error}
+    HTTPoison.post(url, "", %{}, options)
+    |> Dockerex.process_httpoison_resp(decoder: :raw)
+    |> case do
+      {:ok, ""} -> :ok
+      resp -> resp
     end
   end
 
