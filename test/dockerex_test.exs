@@ -147,14 +147,18 @@ defmodule DockerexTest do
 
     assert {:ok, stream} = File.read(tar_filename)
 
-    assert {:error, :build_error,
-            %{
-              error: "manifest for ubuntu:17 not found: manifest unknown: manifest unknown",
-              errorDetail: %{
-                message: "manifest for ubuntu:17 not found: manifest unknown: manifest unknown"
-              }
-            }} ==
-             Images.build(%{}, stream)
+    test_build_fails = fn ->
+      assert {:error, :build_error,
+              %{
+                error: "manifest for ubuntu:17 not found: manifest unknown: manifest unknown",
+                errorDetail: %{
+                  message: "manifest for ubuntu:17 not found: manifest unknown: manifest unknown"
+                }
+              }} ==
+               Images.build(%{}, stream)
+    end
+
+    assert capture_log(test_build_fails) =~ "Cannot extract image ID"
   end
 
   test "Image: create, get, and remove" do
