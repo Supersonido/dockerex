@@ -7,8 +7,10 @@ defmodule Dockerex do
   @type engine_ok() ::
           {:ok, map() | [map()]}
 
-  @type engine_err() ::
-          {:error, :bad_request | :not_found | :internal_server_error | :request_error, map()}
+  @type http_const() ::
+          :bad_request | :not_found | :forbidden | :internal_server_error | :conflict
+
+  @type engine_err() :: {:error, http_const() | :request_error, map()}
 
   @type httpoison_resp() ::
           {:ok,
@@ -135,17 +137,22 @@ defmodule Dockerex do
 
   Returns a data that is close to Docker Engine API responses.
   """
-  @spec process_httpoison_resp(httpoison_resp()) :: engine_ok() | engine_err()
+  @spec process_httpoison_resp(httpoison_resp(), Keyword.t()) :: engine_ok() | engine_err()
   def process_httpoison_resp(response, opts \\ nil) do
     opts = opts || []
 
     case response do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+      {:ok, %HTTPoison.Response{status_code: code, body: body}} when 200 <= code and code < 300 ->
         decoded =
-          if opts[:progress] do
-            decode_progress(body)
-          else
-            Poison.decode!(body, keys: :atoms)
+          case opts[:decoder] do
+            :raw ->
+              body
+
+            :progress ->
+              decode_progress(body)
+
+            other when other == nil or other == :json ->
+              Poison.decode!(body, keys: :atoms)
           end
 
         {:ok, decoded}
@@ -156,7 +163,9 @@ defmodule Dockerex do
         error =
           case code do
             400 -> :bad_request
+            403 -> :forbidden
             404 -> :not_found
+            409 -> :conflict
             500 -> :internal_server_error
           end
 

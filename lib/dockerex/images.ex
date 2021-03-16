@@ -55,7 +55,7 @@ defmodule Dockerex.Images do
     opts = Dockerex.add_options()
 
     HTTPoison.post(url, image || "", headers, opts)
-    |> Dockerex.process_httpoison_resp(progress: true)
+    |> Dockerex.process_httpoison_resp(decoder: :progress)
   end
 
   @doc """
@@ -98,7 +98,7 @@ defmodule Dockerex.Images do
     options = Dockerex.add_options()
 
     HTTPoison.post(url, image || "", headers, options)
-    |> Dockerex.process_httpoison_resp(progress: true)
+    |> Dockerex.process_httpoison_resp(decoder: :progress)
     |> case do
       {:ok, progress} ->
         errors =
