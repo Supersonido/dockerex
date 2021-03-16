@@ -3,6 +3,7 @@ defmodule DockerexTest do
   import ExUnit.CaptureLog
 
   alias Dockerex.Images
+  alias Dockerex.Containers
 
   test "Docker Engine API version" do
     assert Dockerex.api_version() == "v1.37"
@@ -185,11 +186,53 @@ defmodule DockerexTest do
     assert message =~ image
   end
 
+  test "Create and remove a container and " do
+    assert {:ok, _progress} = Images.create(fromImage: "ubuntu:18.04")
+    assert {:ok, %{Id: id}} = Containers.create(nil, %{image: "ubuntu:18.04"})
+    assert {:ok, %{Id: ^id}} = Containers.get(id)
+    assert :ok == Containers.remove(id)
+  end
+
+  test "Get and remove non existent container" do
+    id = "non_existent_container"
+    assert {:error, :not_found, %{message: _}} = Containers.get(id)
+    assert {:error, :not_found, %{message: _}} = Containers.remove(id)
+  end
+
+  test "Get archive" do
+    assert {:ok, _progress} = Images.create(fromImage: "ubuntu:18.04")
+    assert {:ok, %{Id: id}} = Containers.create(nil, %{image: "ubuntu:18.04"})
+    assert {:error, :bad_request, %{message: _}} = Containers.get_archive(id, %{})
+
+    assert {:ok, archive} = Containers.get_archive(id, %{path: "/etc/passwd"})
+    assert is_binary(archive)
+  end
+
+  @tag :temporal
+  test "Put archive" do
+    content = "this is the content"
+    basename = "dockerex.txt"
+    filename = Path.join(["/tmp", basename])
+    tar_filename = Path.join(["/tmp", "dockerex.tar"])
+
+    assert :ok == File.write!(filename, content)
+
+    assert :ok ==
+             :erl_tar.create(tar_filename, [
+               {String.to_charlist(basename), String.to_charlist(filename)}
+             ])
+
+    assert {:ok, stream} = File.read(tar_filename)
+
+    assert {:ok, _progress} = Images.create(fromImage: "ubuntu:18.04")
+    assert {:ok, %{Id: id}} = Containers.create(nil, %{image: "ubuntu:18.04"})
+    assert :ok = Containers.put_archive(id, stream, %{path: "/tmp"})
+    assert {:ok, "dockerex.txt" <> archive} = Containers.get_archive(id, %{path: filename})
+    assert archive =~ content
+  end
+
   test "Tests to be added based on the used container interface from deliverit" do
     # Uses of Dockerex from deliverit: Containers
-    #   {:ok, %{Id: container}} = Containers.create(nil, ops)
-    #   {:ok, save} = Containers.get_archive(last_container, %{path: dir})
-    #     :ok = Containers.put_archive(container, save, %{path: "/"})
     # {:ok, _} = Containers.start(container)
     # :timer.apply_after(5000 * 60, Dockerex.Containers, :kill, [container])
     # exit = Containers.wait(container)

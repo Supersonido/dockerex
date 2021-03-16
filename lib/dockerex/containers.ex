@@ -35,42 +35,26 @@ defmodule Dockerex.Containers do
   end
 
   # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
-  @spec get(String.t()) :: {:ok, Container.t()} | {:error, :request_error | :not_found}
+  @doc """
+  Return low-level information about a container.
+  """
+  @spec get(String.t()) :: {:ok, Container.t()} | Dockerex.engine_err()
   def get(id) do
-    case HTTPoison.get(Dockerex.get_url("/containers/#{id}/json")) do
-      {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
-        {:ok, Poison.decode!(body, keys: :atoms)}
-
-      {:ok, %HTTPoison.Response{status_code: 404}} ->
-        {:error, :not_found}
-
-      resp ->
-        Logger.error("#{inspect(resp)}")
-        {:error, :request_error}
-    end
+    HTTPoison.get(Dockerex.get_url("/containers/#{id}/json"))
+    |> Dockerex.process_httpoison_resp()
   end
 
-  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
+  @doc """
+  Create a container.
+  """
   @spec create(String.t() | nil, CreateContainer.t()) ::
-          {:ok, CreateContainerResponse.t()} | {:error, :request_error | :not_found}
-  def create(name, params) do
+          {:ok, CreateContainerResponse.t()} | Dockerex.engine_err()
+  def create(name \\ nil, params) do
     url = Dockerex.get_url("/containers/create", %{name: name})
     headers = Dockerex.headers()
 
-    case HTTPoison.post(url, Poison.encode!(params), headers, []) do
-      {:ok, %HTTPoison.Response{body: body, status_code: 201}} ->
-        {:ok, Poison.decode!(body, keys: :atoms)}
-
-      {:ok, %HTTPoison.Response{status_code: 400, body: body}} ->
-        {:error, :bad_request, Poison.decode!(body)}
-
-      {:ok, %HTTPoison.Response{status_code: 409}} ->
-        {:error, :conflict}
-
-      resp ->
-        Logger.error("#{inspect(resp)}")
-        {:error, :request_error}
-    end
+    HTTPoison.post(url, Poison.encode!(params), headers, [])
+    |> Dockerex.process_httpoison_resp()
   end
 
   # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
@@ -177,26 +161,19 @@ defmodule Dockerex.Containers do
     end
   end
 
-  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
-  @spec remove(String.t(), RemoveParams.t() | nil) ::
-          :ok | {:error, :running | :not_found | :request_error}
+  @doc """
+  Remove a container.
+  """
+  @spec remove(String.t(), RemoveParams.t() | nil) :: :ok | Dockerex.engine_err()
   def remove(id, params \\ nil) do
     url = Dockerex.get_url("/containers/#{id}", params)
     options = Dockerex.add_options()
 
-    case HTTPoison.delete(url, %{}, options) do
-      {:ok, %HTTPoison.Response{status_code: 204}} ->
-        :ok
-
-      {:ok, %HTTPoison.Response{status_code: 409}} ->
-        {:error, :running}
-
-      {:ok, %HTTPoison.Response{status_code: 404}} ->
-        {:error, :not_found}
-
-      resp ->
-        Logger.error("#{inspect(resp)}")
-        {:error, :request_error}
+    HTTPoison.delete(url, %{}, options)
+    |> Dockerex.process_httpoison_resp()
+    |> case do
+      {:ok, ""} -> :ok
+      response -> response
     end
   end
 
@@ -252,54 +229,35 @@ defmodule Dockerex.Containers do
     end
   end
 
-  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
+  @doc """
+  Get a tar archive of a resource in the filesystem of container id.
+  """
   @spec get_archive(String.t(), GetArchiveParams.t()) ::
-          {:ok, binary()} | {:error, :bad_request | :not_found | :request_error}
+          {:ok, binary()} | Dockerex.engine_err()
   def get_archive(id, params) do
     url = Dockerex.get_url("/containers/#{id}/archive", params)
     headers = Dockerex.headers()
     options = Dockerex.add_options()
 
-    case HTTPoison.get(url, headers, options) do
-      {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
-        {:ok, body}
-
-      {:ok, %HTTPoison.Response{status_code: 400, body: body}} ->
-        {:error, :bad_request, Poison.decode!(body)}
-
-      {:ok, %HTTPoison.Response{status_code: 404}} ->
-        {:error, :not_found}
-
-      resp ->
-        Logger.error("#{inspect(resp)}")
-        {:error, :request_error}
-    end
+    HTTPoison.get(url, headers, options)
+    |> Dockerex.process_httpoison_resp(decoder: :raw)
   end
 
-  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
+  @doc """
+  Upload a tar archive to be extracted to a path in the filesystem of container id.
+  """
   @spec put_archive(String.t(), binary(), PutArchiveParams.t()) ::
-          :ok | {:error, :bad_request | :not_found | :request_error | :forbidden}
+          :ok | Dockerex.engine_err()
   def put_archive(id, body, params) do
     url = Dockerex.get_url("/containers/#{id}/archive", params)
     headers = Dockerex.headers()
     options = Dockerex.add_options()
 
-    case HTTPoison.put(url, body, headers, options) do
-      {:ok, %HTTPoison.Response{status_code: 200}} ->
-        :ok
-
-      {:ok, %HTTPoison.Response{status_code: 400, body: body}} ->
-        {:error, :bad_request, Poison.decode!(body)}
-
-      {:ok, %HTTPoison.Response{status_code: 404}} ->
-        {:error, :not_found}
-
-      {:ok, %HTTPoison.Response{status_code: 403}} ->
-        {:error, :forbidden}
-
-      resp ->
-        Logger.error("#{inspect(resp)}")
-        {:error, :request_error}
+    HTTPoison.put(url, body, headers, options)
+    |> Dockerex.process_httpoison_resp(decoder: :raw)
+    |> case do
+      {:ok, ""} -> :ok
+      resp -> resp
     end
   end
 end
