@@ -8,9 +8,14 @@ defmodule Dockerex do
           {:ok, map() | [map()]}
 
   @type http_const() ::
-          :bad_request | :not_found | :forbidden | :internal_server_error | :conflict
+          :not_modified
+          | :bad_request
+          | :not_found
+          | :forbidden
+          | :conflict
+          | :internal_server_error
 
-  @type engine_err() :: {:error, http_const() | :request_error, map()}
+  @type engine_err() :: {:error, http_const() | :request_error, map() | nil}
 
   @type httpoison_resp() ::
           {:ok,
@@ -162,6 +167,7 @@ defmodule Dockerex do
 
         error =
           case code do
+            304 -> :not_modified
             400 -> :bad_request
             403 -> :forbidden
             404 -> :not_found
