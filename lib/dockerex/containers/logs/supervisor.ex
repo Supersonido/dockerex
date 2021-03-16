@@ -8,9 +8,18 @@ defmodule Dockerex.Containers.Logs.Supervisor do
     DynamicSupervisor.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
-  def start_child(pid) do
-    spec = %{id: Worker, start: {Worker, :start_link, [pid]}, restart: :transient}
+  def start_child(listener, chunk_decoder \\ nil) when is_pid(listener) do
+    spec = %{
+      id: Worker,
+      start: {Worker, :start_link, [listener, chunk_decoder]},
+      restart: :transient
+    }
+
     DynamicSupervisor.start_child(__MODULE__, spec)
+  end
+
+  def stop_child(pid) do
+    DynamicSupervisor.terminate_child(__MODULE__, pid)
   end
 
   @impl true

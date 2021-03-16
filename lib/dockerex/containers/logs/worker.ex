@@ -3,38 +3,38 @@ defmodule Dockerex.Containers.Logs.Worker do
 
   use GenServer
 
-  def start_link(pid) do
-    GenServer.start_link(__MODULE__, %{pid: pid, ref: nil})
+  def start_link(pid, chunk_decoder) when is_function(chunk_decoder) or chunk_decoder == nil do
+    GenServer.start_link(__MODULE__, %{pid: pid, decoder: chunk_decoder || (& &1)})
   end
 
   @impl true
-  def init(stack) do
-    {:ok, stack}
+  def init(state) do
+    {:ok, state}
   end
 
   @impl true
-  def handle_info(%HTTPoison.AsyncStatus{id: reference, code: code}, %{pid: pid}) do
-    case code do
-      200 ->
-        {:noreply, %{pid: pid, ref: reference}}
-
-      _ ->
-        send(pid, {:error, reference})
-        {:stop, :normal, %{pid: pid, ref: reference}}
-    end
-  end
-
-  def handle_info(%HTTPoison.AsyncHeaders{}, state) do
+  def handle_info(%HTTPoison.AsyncStatus{id: _reference, code: code}, state) do
+    send(state.pid, {:status, code})
     {:noreply, state}
   end
 
-  def handle_info(%HTTPoison.AsyncChunk{chunk: data}, %{pid: pid, ref: reference}) do
-    send(pid, {:ok, reference, data})
-    {:noreply, %{pid: pid, ref: reference}}
+  def handle_info(%HTTPoison.AsyncHeaders{headers: headers, id: _reference}, state) do
+    send(state.pid, {:headers, headers})
+    {:noreply, state}
   end
 
-  def handle_info(%HTTPoison.AsyncEnd{}, %{pid: pid, ref: reference}) do
-    send(pid, {:end, reference})
-    {:stop, :normal, %{pid: pid, ref: reference}}
+  def handle_info(%HTTPoison.AsyncChunk{chunk: chunk, id: _reference}, state) do
+    send(state.pid, {:chunk, state.decoder.(chunk)})
+    {:noreply, state}
+  end
+
+  def handle_info(%HTTPoison.AsyncRedirect{headers: _headers, id: _reference, to: to}, state) do
+    send(state.pid, {:redirect, to})
+    {:noreply, state}
+  end
+
+  def handle_info(%HTTPoison.AsyncEnd{id: _reference}, state) do
+    send(state.pid, :end)
+    {:stop, :normal, state}
   end
 end

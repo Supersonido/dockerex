@@ -246,7 +246,7 @@ defmodule DockerexTest do
     assert {:error, :not_modified, nil} = Containers.start(id)
 
     assert {:ok, %{Error: nil, StatusCode: 0}} = Containers.wait(id)
-    assert {:ok, logs} = Containers.logs(id, nil, %{stdout: true})
+    assert {:ok, logs} = Containers.logs(id, %{stdout: true})
     assert [frame | _frames] = logs
     assert %{output: ".:\n", size: 3, stream_type: :stdout} = frame
 
@@ -254,8 +254,7 @@ defmodule DockerexTest do
     assert {:error, :not_modified, nil} = Containers.stop(id)
   end
 
-  @tag :temporal
-  test "Decode when tty enabled" do
+  test "Get logs when tty enabled" do
     assert {:ok, _progress} = Images.create(fromImage: "ubuntu:18.04")
 
     assert {:ok, %{Id: id}} =
@@ -265,7 +264,77 @@ defmodule DockerexTest do
 
     assert {:ok, %{Error: nil, StatusCode: 0}} = Containers.wait(id)
 
-    assert {:ok, ".:\r\n" <> _} = Containers.logs(id, nil, %{stdout: true})
+    assert {:ok, ".:\r\n" <> _} = Containers.logs(id, %{stdout: true})
+  end
+
+  test "Get logs asynchronously: tty true" do
+    assert {:ok, _progress} = Images.create(fromImage: "ubuntu:18.04")
+
+    assert {:ok, %{Id: id}} =
+             Containers.create(nil, %{Image: "ubuntu:18.04", Tty: true, Cmd: ["ls", "-al"]})
+
+    assert :ok = Containers.start(id)
+
+    task = Task.async(&test_ls/0)
+    assert {:ok, reference} = Containers.logs(id, %{stderr: true, stdout: true}, task.pid)
+    assert is_reference(reference)
+    assert :ok = Task.await(task)
+  end
+
+  test "Get logs asynchronously: tty false" do
+    assert {:ok, _progress} = Images.create(fromImage: "ubuntu:18.04")
+
+    assert {:ok, %{Id: id}} =
+             Containers.create(nil, %{Image: "ubuntu:18.04", Tty: false, Cmd: ["ls", "-al"]})
+
+    assert :ok = Containers.start(id)
+
+    task = Task.async(&test_ls_logs/0)
+    assert {:ok, reference} = Containers.logs(id, %{stderr: true, stdout: true}, task.pid)
+    assert is_reference(reference)
+    assert :ok = Task.await(task)
+  end
+
+  defp test_ls() do
+    receive do
+      msg -> assert {:status, 200} == msg
+    end
+
+    receive do
+      msg -> assert {:headers, _} = msg
+    end
+
+    receive do
+      msg -> assert {:chunk, "total 72\r\n"} == msg
+    end
+
+    listen_until(:end)
+  end
+
+  defp test_ls_logs() do
+    receive do
+      msg -> assert {:status, 200} == msg
+    end
+
+    receive do
+      msg -> assert {:headers, _} = msg
+    end
+
+    receive do
+      msg -> assert {:chunk, [%{output: "total 72\n", size: 9, stream_type: :stdout}]} == msg
+    end
+
+    listen_until(:end)
+  end
+
+  defp listen_until(msg) do
+    receive do
+      ^msg ->
+        :ok
+
+      _ ->
+        listen_until(msg)
+    end
   end
 
   test "Start and stop a container" do

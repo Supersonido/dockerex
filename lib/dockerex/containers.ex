@@ -59,16 +59,28 @@ defmodule Dockerex.Containers do
   @doc """
   Get stdout and stderr logs from a container.
 
+  If `pid` is a `t:pid/0` then the output is streamed to the process:
+
+  - `{:status, status_code}` where `status_code` is the HTTP status code
+  - `{:headers, headers}` where `headers` are the headers ot the HTTP response
+  - `{:chunk, chunk}` where `chunk` is a `t:Dockerex.frame/0` or `t:binary/0`
+  - `{:redirect, to}` where `to` is the URL of a redirection
+  - `:end` to indicate the stream ended
+
   Note: This endpoint works only for containers with the json-file or journald logging driver.
   """
-  @spec logs(String.t(), pid() | nil, LogsParams.t()) ::
-          {:ok, binary()} | {:error, :not_found | :request_error}
-  def logs(id, pid \\ nil, params \\ %{stdout: true, stderr: true})
+  @spec logs(String.t(), LogsParams.t(), pid() | nil) ::
+          Dockerex.engine_ok() | Dockerex.engine_err()
+  def logs(id, params \\ %{}, pid \\ nil)
 
-  def logs(id, nil, params) do
-    url = Dockerex.get_url("/containers/#{id}/logs", params)
+  def logs(id, params, nil) when is_map(params) do
+    url =
+      Dockerex.get_url(
+        "/containers/#{id}/logs",
+        Map.put(params, :follow, false)
+      )
 
-    # The decoder depends on configuration: :logs of TTY disabled
+    # The decoder depends on configuration: :logs if TTY disabled
     decoder =
       case Dockerex.Containers.get(id) do
         {:ok, %{Config: %{Tty: false}}} ->
@@ -82,20 +94,35 @@ defmodule Dockerex.Containers do
     |> Dockerex.process_httpoison_resp(decoder: decoder)
   end
 
-  # TODO(AH): adapt this clause to Dockerex.process_httpoison_resp
-  def logs(id, pid, params) when is_pid(pid) do
-    url = Dockerex.get_url("/containers/#{id}/logs", Map.put(params, :follow, true))
-    {:ok, gen} = Dockerex.Containers.Logs.Supervisor.start_child(pid)
-    options = Dockerex.add_options(stream_to: gen)
+  def logs(id, params, pid) when is_pid(pid) do
+    url =
+      Dockerex.get_url(
+        "/containers/#{id}/logs",
+        Map.put(params, :follow, true)
+      )
 
-    case HTTPoison.get(url, %{}, options) do
-      {:ok, %HTTPoison.AsyncResponse{id: reference}} ->
-        {:ok, reference}
+    # The decoder depends on configuration: Dockered.decode_logs if TTY disabled
+    decoder =
+      case Dockerex.Containers.get(id) do
+        {:ok, %{Config: %{Tty: false}}} ->
+          &Dockerex.decode_logs/1
+
+        _ ->
+          nil
+      end
+
+    {:ok, listener} = Dockerex.Containers.Logs.Supervisor.start_child(pid, decoder)
+    options = Dockerex.add_options(stream_to: listener)
+
+    HTTPoison.get(url, %{}, options)
+    |> Dockerex.process_httpoison_resp()
+    |> case do
+      {:error, _, _} = resp ->
+        Dockerex.Containers.Logs.Supervisor.stop_child(listener)
+        resp
 
       resp ->
-        GenServer.stop(gen)
-        Logger.error("#{inspect(resp)}")
-        {:error, :request_error}
+        resp
     end
   end
 
