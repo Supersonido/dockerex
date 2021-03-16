@@ -73,7 +73,7 @@ defmodule Dockerex.Containers do
   end
 
   # TODO(AH): adapt this clause to Dockerex.process_httpoison_resp
-  def logs(id, pid, params) do
+  def logs(id, pid, params) when is_pid(pid) do
     url = Dockerex.get_url("/containers/#{id}/logs", Map.put(params, :follow, true))
     {:ok, gen} = Dockerex.Containers.Logs.Supervisor.start_child(pid)
     options = Dockerex.add_options(stream_to: gen)
