@@ -1,2 +1,3 @@
 - Functions in Dockerex module should not be exposed, move them to an "internal" module.
 - Configuration in Dockerex functions should be moved to config files.
+- Think about converting types in Containers.Types and Images.Types to typed structs.
