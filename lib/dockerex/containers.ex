@@ -34,7 +34,6 @@ defmodule Dockerex.Containers do
     end
   end
 
-  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
   @doc """
   Return low-level information about a container.
   """
@@ -57,23 +56,20 @@ defmodule Dockerex.Containers do
     |> Dockerex.process_httpoison_resp()
   end
 
-  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
-  @spec logs(String.t(), pid() | nil, map()) ::
+  @doc """
+  Get stdout and stderr logs from a container.
+
+  Note: This endpoint works only for containers with the json-file or journald logging driver.
+  """
+  @spec logs(String.t(), pid() | nil, LogsParams.t()) ::
           {:ok, binary()} | {:error, :not_found | :request_error}
+  def logs(id, pid \\ nil, params \\ %{stdout: true, stderr: true})
+
   def logs(id, nil, params) do
     url = Dockerex.get_url("/containers/#{id}/logs", params)
 
-    case HTTPoison.get(url, %{}, []) do
-      {:ok, %HTTPoison.Response{body: body, status_code: 200}} ->
-        {:ok, body}
-
-      {:ok, %HTTPoison.Response{status_code: 404}} ->
-        {:error, :not_found}
-
-      resp ->
-        Logger.error("#{inspect(resp)}")
-        {:error, :request_error}
-    end
+    HTTPoison.get(url, %{}, [])
+    |> Dockerex.process_httpoison_resp(decoder: :logs)
   end
 
   def logs(id, pid, params) do
@@ -92,49 +88,35 @@ defmodule Dockerex.Containers do
     end
   end
 
-  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
-  @spec start(String.t(), StartParams.t() | nil) ::
-          {:ok, String.t()} | {:error, :already_started | :not_found | :request_error}
+  @doc """
+  Start a container.
+  """
+  @spec start(String.t(), StartParams.t() | nil) :: :ok | Dockerex.engine_err()
   def start(id, params \\ nil) do
     url = Dockerex.get_url("/containers/#{id}/start", params)
     options = Dockerex.add_options()
 
-    case HTTPoison.post(url, "", %{}, options) do
-      {:ok, %HTTPoison.Response{status_code: 204}} ->
-        {:ok, id}
-
-      {:ok, %HTTPoison.Response{status_code: 304}} ->
-        {:error, :already_started}
-
-      {:ok, %HTTPoison.Response{status_code: 404}} ->
-        {:error, :not_found}
-
-      resp ->
-        Logger.error("#{inspect(resp)}")
-        {:error, :request_error}
+    HTTPoison.post(url, "", %{}, options)
+    |> Dockerex.process_httpoison_resp(decoder: :raw)
+    |> case do
+      {:ok, ""} -> :ok
+      resp -> resp
     end
   end
 
-  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
-  @spec stop(String.t(), StopParams.t() | nil) ::
-          {:ok, String.t()} | {:error, :already_stopped | :not_found | :request_error}
+  @doc """
+  Stop a container.
+  """
+  @spec stop(String.t(), StopParams.t() | nil) :: :ok | Dockerex.engine_err()
   def stop(id, params \\ nil) do
     url = Dockerex.get_url("/containers/#{id}/stop", params)
     options = Dockerex.add_options()
 
-    case HTTPoison.post(url, "", %{}, options) do
-      {:ok, %HTTPoison.Response{status_code: 204}} ->
-        {:ok, id}
-
-      {:ok, %HTTPoison.Response{status_code: 304}} ->
-        {:error, :already_stopped}
-
-      {:ok, %HTTPoison.Response{status_code: 404}} ->
-        {:error, :not_found}
-
-      resp ->
-        Logger.error("#{inspect(resp)}")
-        {:error, :request_error}
+    HTTPoison.post(url, "", %{}, options)
+    |> Dockerex.process_httpoison_resp(decoder: :raw)
+    |> case do
+      {:ok, ""} -> :ok
+      resp -> resp
     end
   end
 
@@ -170,7 +152,7 @@ defmodule Dockerex.Containers do
     options = Dockerex.add_options()
 
     HTTPoison.delete(url, %{}, options)
-    |> Dockerex.process_httpoison_resp()
+    |> Dockerex.process_httpoison_resp(decoder: :raw)
     |> case do
       {:ok, ""} -> :ok
       response -> response
@@ -209,24 +191,16 @@ defmodule Dockerex.Containers do
     end
   end
 
-  # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
-  @spec wait(String.t(), String.t() | nil) ::
-          {:ok, WaitResponse.t()} | {:error, :request_error | :not_found}
+  @doc """
+  Block until a container stops, then returns the exit code.
+  """
+  @spec wait(String.t(), String.t() | nil) :: {:ok, WaitResponse.t()} | Dockerex.engine_err()
   def wait(id, condition \\ nil) do
     url = Dockerex.get_url("/containers/#{id}/wait", %{condition: condition})
     options = Dockerex.add_options()
 
-    case HTTPoison.post(url, "", %{}, options) do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        {:ok, Poison.decode!(body, keys: :atoms)}
-
-      {:ok, %HTTPoison.Response{status_code: 404}} ->
-        {:error, :not_found}
-
-      resp ->
-        Logger.error("#{inspect(resp)}")
-        {:error, :request_error}
-    end
+    HTTPoison.post(url, "", %{}, options)
+    |> Dockerex.process_httpoison_resp()
   end
 
   @doc """

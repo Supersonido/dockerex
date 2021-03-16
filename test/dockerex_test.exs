@@ -208,7 +208,6 @@ defmodule DockerexTest do
     assert is_binary(archive)
   end
 
-  @tag :temporal
   test "Put archive" do
     content = "this is the content"
     basename = "dockerex.txt"
@@ -231,12 +230,36 @@ defmodule DockerexTest do
     assert archive =~ content
   end
 
-  test "Tests to be added based on the used container interface from deliverit" do
-    # Uses of Dockerex from deliverit: Containers
-    # {:ok, _} = Containers.start(container)
-    # :timer.apply_after(5000 * 60, Dockerex.Containers, :kill, [container])
-    # exit = Containers.wait(container)
-    # {:ok, logs} = Containers.logs(container, nil, %{stdout: true})
-    #       Containers.remove(container, %{force: true})
+  test "Start, wait, get logs, and stop a container" do
+    assert {:ok, _progress} = Images.create(fromImage: "ubuntu:18.04")
+
+    assert {:ok, %{Id: id}} =
+             Containers.create(nil, %{Image: "ubuntu:18.04", Cmd: ["ls", "-alR"]})
+
+    assert :ok = Containers.start(id)
+
+    ## Since command takes a long time, cannot start the container again
+    assert {:error, :not_modified, nil} = Containers.start(id)
+
+    assert {:ok, %{Error: nil, StatusCode: 0}} = Containers.wait(id)
+    assert {:ok, logs} = Containers.logs(id)
+    assert [frame | _frames] = logs
+    assert %{data: ".:\n", size: 3, stream_type: :stdout} = frame
+
+    ## Since command has already finished and the container is stopped, stop will fail
+    assert {:error, :not_modified, nil} = Containers.stop(id)
+  end
+
+  test "Start and stop a container" do
+    assert {:ok, _progress} = Images.create(fromImage: "ubuntu:18.04")
+
+    assert {:ok, %{Id: id}} =
+             Containers.create(nil, %{Image: "ubuntu:18.04", Cmd: ["ls", "-alR"]})
+
+    ## Since container was not started, stop fails
+    assert {:error, :not_modified, nil} = Containers.stop(id)
+
+    assert :ok = Containers.start(id)
+    assert :ok = Containers.stop(id)
   end
 end
