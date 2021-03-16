@@ -68,8 +68,18 @@ defmodule Dockerex.Containers do
   def logs(id, nil, params) do
     url = Dockerex.get_url("/containers/#{id}/logs", params)
 
+    # The decoder depends on configuration: :logs of TTY disabled
+    decoder =
+      case Dockerex.Containers.get(id) do
+        {:ok, %{Config: %{Tty: false}}} ->
+          :logs
+
+        _ ->
+          :raw
+      end
+
     HTTPoison.get(url, %{}, [])
-    |> Dockerex.process_httpoison_resp(decoder: :logs)
+    |> Dockerex.process_httpoison_resp(decoder: decoder)
   end
 
   # TODO(AH): adapt this clause to Dockerex.process_httpoison_resp

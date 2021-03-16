@@ -246,12 +246,26 @@ defmodule DockerexTest do
     assert {:error, :not_modified, nil} = Containers.start(id)
 
     assert {:ok, %{Error: nil, StatusCode: 0}} = Containers.wait(id)
-    assert {:ok, logs} = Containers.logs(id)
+    assert {:ok, logs} = Containers.logs(id, nil, %{stdout: true})
     assert [frame | _frames] = logs
     assert %{output: ".:\n", size: 3, stream_type: :stdout} = frame
 
     ## Since command has already finished and the container is stopped, stop will fail
     assert {:error, :not_modified, nil} = Containers.stop(id)
+  end
+
+  @tag :temporal
+  test "Decode when tty enabled" do
+    assert {:ok, _progress} = Images.create(fromImage: "ubuntu:18.04")
+
+    assert {:ok, %{Id: id}} =
+             Containers.create(nil, %{Image: "ubuntu:18.04", Tty: true, Cmd: ["ls", "-alR"]})
+
+    assert :ok = Containers.start(id)
+
+    assert {:ok, %{Error: nil, StatusCode: 0}} = Containers.wait(id)
+
+    assert {:ok, ".:\r\n" <> _} = Containers.logs(id, nil, %{stdout: true})
   end
 
   test "Start and stop a container" do
