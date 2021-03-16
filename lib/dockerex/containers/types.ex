@@ -360,6 +360,18 @@ defmodule Dockerex.Containers.Types do
             | nil
   end
 
+  defmodule LogsParams do
+    @type t :: %{
+            follow: boolean(),
+            stdout: boolean(),
+            stderr: boolean(),
+            since: integer(),
+            until: integer(),
+            timestamps: boolean(),
+            tail: String.t() | integer()
+          }
+  end
+
   defmodule StartParams do
     @type t :: %{detachKeys: String.t()}
   end
