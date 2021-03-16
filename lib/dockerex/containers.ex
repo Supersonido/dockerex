@@ -71,7 +71,7 @@ defmodule Dockerex.Containers do
   """
   @spec logs(String.t(), LogsParams.t(), pid() | nil) ::
           Dockerex.engine_ok() | Dockerex.engine_err()
-  def logs(id, params \\ %{}, pid \\ nil)
+  def logs(id, params \\ %{stdout: true}, pid \\ nil)
 
   def logs(id, params, nil) when is_map(params) do
     url =
