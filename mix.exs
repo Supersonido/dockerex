@@ -23,9 +23,10 @@ defmodule Dockerex.MixProject do
   defp deps do
     [
       {:params, "~> 2.1"},
-      {:httpoison, "~> 1.5"},
+      {:httpoison, "~> 1.8"},
       {:poison, "~> 4.0"},
-      {:dialyxir, "~> 1.0.0-rc.7", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.1", only: [:dev], runtime: false},
+      {:ex_doc, "~> 0.23", only: :dev, runtime: false}
     ]
   end
 end

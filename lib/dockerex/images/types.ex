@@ -1,4 +1,9 @@
 defmodule Dockerex.Images.Types do
+  @moduledoc """
+  Module with the request and responses types when interfacing the image related API.
+
+  Using the module makes all types available.
+  """
   defmacro __using__(_) do
     quote do
       alias Dockerex.Images.Types.ListParams

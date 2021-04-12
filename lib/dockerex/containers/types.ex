@@ -1,7 +1,13 @@
 defmodule Dockerex.Containers.Types do
+  @moduledoc """
+  Module with the request and responses types when interfacing the container related API.
+
+  Using the module makes all types available.
+  """
   defmacro __using__(_) do
     quote do
       alias Dockerex.Containers.Types.ListParams
+      alias Dockerex.Containers.Types.LogsParams
       alias Dockerex.Containers.Types.ContainerAbstract
       alias Dockerex.Containers.Types.Container
       alias Dockerex.Containers.Types.CreateContainer
@@ -353,6 +359,18 @@ defmodule Dockerex.Containers.Types do
     @type t ::
             %{all: boolean(), limit: integer(), size: integer(), filters: ListParamsFilter.t()}
             | nil
+  end
+
+  defmodule LogsParams do
+    @type t :: %{
+            optional(:follow) => boolean(),
+            optional(:stdout) => boolean(),
+            optional(:stderr) => boolean(),
+            optional(:since) => integer(),
+            optional(:until) => integer(),
+            optional(:timestamps) => boolean(),
+            optional(:tail) => String.t() | integer()
+          }
   end
 
   defmodule StartParams do
