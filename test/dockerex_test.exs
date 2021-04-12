@@ -190,11 +190,12 @@ defmodule DockerexTest do
     assert message =~ image
   end
 
-  test "Create and remove a container and " do
+  test "Create and remove a container" do
     assert {:ok, _progress} = Images.create(fromImage: "ubuntu:18.04")
     assert {:ok, %{Id: id}} = Containers.create(nil, %{image: "ubuntu:18.04"})
     assert {:ok, %{Id: ^id}} = Containers.get(id)
     assert :ok == Containers.remove(id)
+    assert {:error, :not_found, %{message: _}} = Containers.get(id)
   end
 
   test "Get and remove non existent container" do
@@ -367,5 +368,8 @@ defmodule DockerexTest do
     assert :ok = Containers.kill(id)
     assert {:ok, after_kill} = Containers.get(id)
     assert %{ExitCode: 137, Status: "exited"} = after_kill[:State]
+
+    ## But container exists
+    assert {:ok, %{Id: ^id}} = Containers.get(id)
   end
 end
