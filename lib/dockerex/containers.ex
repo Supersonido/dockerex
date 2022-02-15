@@ -49,6 +49,7 @@ defmodule Dockerex.Containers do
   @spec create(String.t() | nil, CreateContainer.t()) ::
           {:ok, CreateContainerResponse.t()} | Dockerex.engine_err()
   def create(name \\ nil, params) do
+    Logger.info("Creating a new container with name #{name}")
     url = Dockerex.get_url("/containers/create", %{name: name})
     headers = Dockerex.headers()
 
@@ -131,6 +132,7 @@ defmodule Dockerex.Containers do
   """
   @spec start(String.t(), StartParams.t() | nil) :: :ok | Dockerex.engine_err()
   def start(id, params \\ nil) do
+    Logger.info("Starting container #{id}")
     url = Dockerex.get_url("/containers/#{id}/start", params)
     options = Dockerex.add_options()
 
@@ -147,6 +149,7 @@ defmodule Dockerex.Containers do
   """
   @spec stop(String.t(), StopParams.t() | nil) :: :ok | Dockerex.engine_err()
   def stop(id, params \\ nil) do
+    Logger.info("Stopping container #{id}")
     url = Dockerex.get_url("/containers/#{id}/stop", params)
     options = Dockerex.add_options()
 
@@ -164,6 +167,7 @@ defmodule Dockerex.Containers do
   @spec kill(String.t(), String.t() | nil) ::
           :ok | {:error, :not_running | :not_found | :request_error}
   def kill(id, signal \\ nil) do
+    Logger.info("Killing container #{id}")
     url = Dockerex.get_url("/containers/#{id}/kill", %{signal: signal})
     options = Dockerex.add_options()
 
@@ -180,6 +184,7 @@ defmodule Dockerex.Containers do
   """
   @spec remove(String.t(), RemoveParams.t() | nil) :: :ok | Dockerex.engine_err()
   def remove(id, params \\ nil) do
+    Logger.info("Removing container #{id}")
     url = Dockerex.get_url("/containers/#{id}", params)
     options = Dockerex.add_options()
 
@@ -228,6 +233,7 @@ defmodule Dockerex.Containers do
   """
   @spec wait(String.t(), String.t() | nil) :: {:ok, WaitResponse.t()} | Dockerex.engine_err()
   def wait(id, condition \\ nil) do
+    Logger.info("Waiting for container #{id} to stop")
     url = Dockerex.get_url("/containers/#{id}/wait", %{condition: condition})
     options = Dockerex.add_options()
 
@@ -241,6 +247,7 @@ defmodule Dockerex.Containers do
   @spec get_archive(String.t(), GetArchiveParams.t()) ::
           {:ok, binary()} | Dockerex.engine_err()
   def get_archive(id, params) do
+    Logger.info("Getting archive from container #{id}")
     url = Dockerex.get_url("/containers/#{id}/archive", params)
     headers = Dockerex.headers()
     options = Dockerex.add_options()
@@ -255,6 +262,7 @@ defmodule Dockerex.Containers do
   @spec put_archive(String.t(), binary(), PutArchiveParams.t()) ::
           :ok | Dockerex.engine_err()
   def put_archive(id, body, params) do
+    Logger.info("Uploading archive to container #{id}")
     url = Dockerex.get_url("/containers/#{id}/archive", params)
     headers = Dockerex.headers()
     options = Dockerex.add_options()

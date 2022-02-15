@@ -50,6 +50,7 @@ defmodule Dockerex.Images do
   """
   @spec create(CreateParams.t(), binary() | nil) :: {:ok, [map()]} | Dockerex.engine_err()
   def create(params, image \\ nil) do
+    Logger.info("Creating image from registry or importing it: #{inspect(params)}")
     url = Dockerex.get_url("/images/create", params)
     headers = Dockerex.add_auth()
     opts = Dockerex.add_options()
@@ -66,6 +67,8 @@ defmodule Dockerex.Images do
           | {:error, :build_error, String.t() | map()}
           | Dockerex.engine_err()
   def build(params, image \\ nil, registry_config \\ %{}) do
+    Logger.info("Building image from archive: #{inspect(params)}")
+
     params =
       case Map.get(params, :cachefrom, nil) do
         nil ->
@@ -139,6 +142,8 @@ defmodule Dockerex.Images do
   # TODO(AH): adapt spec and implementation to Dockerex.process_httpoison_resp
   @spec prune(map() | nil) :: {:ok, map()} | {:error, :request_error}
   def prune(params \\ nil) do
+    Logger.info("Pruning images with parameters #{inspect(params)}")
+
     params =
       case params do
         nil ->
@@ -173,6 +178,7 @@ defmodule Dockerex.Images do
   """
   @spec remove(String.t(), RemoveParams.t()) :: {:ok, RemoveResponse.t()} | Dockerex.engine_err()
   def remove(id, params \\ nil) do
+    Logger.info("Removing image #{id}")
     url = Dockerex.get_url("/images/#{id}", params)
     options = Dockerex.add_options()
 

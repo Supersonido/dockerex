@@ -194,6 +194,7 @@ defmodule Dockerex do
 
     case response do
       {:ok, %HTTPoison.AsyncResponse{id: reference}} ->
+        Logger.info("Asynchronous Response: #{inspect(reference)}")
         {:ok, reference}
 
       {:ok, %HTTPoison.Response{status_code: code, body: body}} when 200 <= code and code < 300 ->
@@ -212,6 +213,7 @@ defmodule Dockerex do
               Poison.decode!(body, keys: :atoms)
           end
 
+        Logger.info("Synchronous Response: #{inspect(decoded)}")
         {:ok, decoded}
 
       {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
@@ -231,6 +233,8 @@ defmodule Dockerex do
             409 -> :conflict
             500 -> :internal_server_error
           end
+
+        Logger.error("HTTP Server Error: #{error} (#{inspect(decoded)})")
 
         {:error, error, decoded}
 
