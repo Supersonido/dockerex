@@ -49,7 +49,10 @@ defmodule Dockerex.Containers do
   @spec create(String.t() | nil, CreateContainer.t()) ::
           {:ok, CreateContainerResponse.t()} | Dockerex.engine_err()
   def create(name \\ nil, params) do
-    Logger.info("Creating a new container with name #{name}")
+    Logger.info(
+      "Creating a new container with name #{inspect(name)} and params #{inspect(params)}"
+    )
+
     url = Dockerex.get_url("/containers/create", %{name: name})
     headers = Dockerex.headers()
 

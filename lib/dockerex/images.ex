@@ -29,7 +29,7 @@ defmodule Dockerex.Images do
         {:error, :bad_request, Poison.decode!(body)}
 
       resp ->
-        Logger.error(resp)
+        Logger.error(inspect(resp))
         {:error, :request_error}
     end
   end
