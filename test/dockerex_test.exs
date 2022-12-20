@@ -192,7 +192,7 @@ defmodule DockerexTest do
 
   test "Create and remove a container" do
     assert {:ok, _progress} = Images.create(fromImage: "ubuntu:18.04")
-    assert {:ok, %{Id: id}} = Containers.create(nil, %{image: "ubuntu:18.04"})
+    assert {:ok, %{Id: id}} = Containers.create(nil, %{Image: "ubuntu:18.04"})
     assert {:ok, %{Id: ^id}} = Containers.get(id)
     assert :ok == Containers.remove(id)
     assert {:error, :not_found, %{message: _}} = Containers.get(id)
@@ -206,7 +206,7 @@ defmodule DockerexTest do
 
   test "Get archive" do
     assert {:ok, _progress} = Images.create(fromImage: "ubuntu:18.04")
-    assert {:ok, %{Id: id}} = Containers.create(nil, %{image: "ubuntu:18.04"})
+    assert {:ok, %{Id: id}} = Containers.create(nil, %{Image: "ubuntu:18.04"})
     assert {:error, :bad_request, %{message: _}} = Containers.get_archive(id, %{})
 
     assert {:ok, archive} = Containers.get_archive(id, %{path: "/etc/passwd"})
@@ -229,7 +229,7 @@ defmodule DockerexTest do
     assert {:ok, stream} = File.read(tar_filename)
 
     assert {:ok, _progress} = Images.create(fromImage: "ubuntu:18.04")
-    assert {:ok, %{Id: id}} = Containers.create(nil, %{image: "ubuntu:18.04"})
+    assert {:ok, %{Id: id}} = Containers.create(nil, %{Image: "ubuntu:18.04"})
     assert :ok = Containers.put_archive(id, stream, %{path: "/tmp"})
     assert {:ok, "dockerex.txt" <> archive} = Containers.get_archive(id, %{path: filename})
     assert archive =~ content
