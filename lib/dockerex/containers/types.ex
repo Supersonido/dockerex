@@ -382,7 +382,11 @@ defmodule Dockerex.Containers.Types do
   end
 
   defmodule RemoveParams do
-    @type t :: %{v: boolean(), force: boolean(), link: boolean()}
+    @type t :: %{
+            optional(:v) => boolean(),
+            optional(:force) => boolean(),
+            optional(:link) => boolean()
+          }
   end
 
   defmodule PruneParamsFilter do
